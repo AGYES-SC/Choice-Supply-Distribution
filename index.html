@@ -257,6 +257,10 @@
   #state-profile .sp-drawer > summary::after { content: '\25B8'; color: var(--text-muted); font-size: 12px; transition: transform .15s; }
   #state-profile .sp-drawer[open] > summary::after { transform: rotate(90deg); }
   #state-profile .sp-drawer-body { padding: 12px 14px; }
+  #state-profile .sp-prog-filter { margin-bottom: 8px; font-size: 12.5px; color: var(--text-secondary); }
+  #state-profile .sp-prog-filter select { font-size: 12.5px; padding: 3px 7px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface-1); color: var(--text-primary); max-width: 100%; }
+  #state-profile .sp-prog-head { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+  #state-profile .sp-prog-list { max-height: 340px; overflow-y: auto; padding-right: 4px; }
   #state-profile .sp-metric-big { text-align: center; padding: 4px 0 2px; }
   #state-profile .sp-metric-num { font-size: 34px; font-weight: 800; color: var(--accent-dark); font-variant-numeric: tabular-nums; line-height: 1; }
   #state-profile .sp-metric-lbl { font-size: 11px; color: var(--text-secondary); margin-top: 4px; line-height: 1.3; }
@@ -515,6 +519,56 @@ function drawer(title, body, open) {
 }
 function kv(k, v) { return `<div class="sp-kv-row"><span class="k">${k}</span><span class="v">${v}</span></div>`; }
 
+// ---- Reported program counts by area (the raw choropleth values, per state) ----
+// One entry per program layer; states with more than one layer (e.g. Arizona's
+// two ESA vintages) are filterable in the drawer. nameKey/key are the geojson
+// feature properties holding the area name and the reported count.
+const PROGRAM_LAYERS = [
+  { abbr:'AZ', label:'ESA accounts &mdash; FY2024', geo: azGeo, key:'total', nameKey:'zip', unit:'ZIP code' },
+  { abbr:'AZ', label:'ESA accounts &mdash; FY2026 (Q1&ndash;Q3)', geo: azGeoFy2026, key:'total', nameKey:'zip', unit:'ZIP code' },
+  { abbr:'FL', label:'FTC scholarships (2022&ndash;23)', geo: flGeo, key:'students', nameKey:'name', unit:'school district' },
+  { abbr:'TX', label:'TEFA participants (2026&ndash;27)', geo: txGeo, key:'students', nameKey:'name', unit:'school district' },
+  { abbr:'NH', label:'EFA enrollees (SY2025&ndash;26)', geo: nhGeo, key:'students', nameKey:'name', unit:'county' },
+  { abbr:'WV', label:'Hope recipients (2024&ndash;25)', geo: wvGeo, key:'students', nameKey:'name', unit:'county' },
+  { abbr:'NC', label:'Opportunity Scholarship (2024&ndash;25)', geo: ncGeo, key:'students', nameKey:'name', unit:'county' },
+  { abbr:'MD', label:'BOOST scholarships (2025&ndash;26)', geo: mdGeo, key:'students', nameKey:'name', unit:'county of residence' },
+  { abbr:'AK', label:'Correspondence Study (FY2024)', geo: akGeo, key:'students', nameKey:'name', unit:'school district' },
+  { abbr:'RI', label:'SGO scholarships (2025)', geo: riGeo, key:'students', nameKey:'name', unit:'ZIP code' },
+  { abbr:'IN', label:'Choice Scholarship (2024&ndash;25)', geo: inGeo, key:'students', nameKey:'name', unit:'county' },
+  { abbr:'WI', label:'Choice Programs (2025&ndash;26)', geo: wiGeo, key:'students', nameKey:'name', unit:'ZIP code' },
+  { abbr:'MO', label:'MOScholars ESA (SY2026&ndash;27)', geo: moGeo, key:'students', nameKey:'name', unit:'school district' },
+];
+
+function programCountsTable(abbr, idx) {
+  const layers = PROGRAM_LAYERS.filter(function(l) { return l.abbr === abbr; });
+  const l = layers[idx] || layers[0];
+  const rows = l.geo.features.map(function(f) { return { n: f.properties[l.nameKey], v: +f.properties[l.key] || 0 }; })
+    .filter(function(r) { return r.v > 0; }).sort(function(a, b) { return b.v - a.v; });
+  const total = rows.reduce(function(s, r) { return s + r.v; }, 0);
+  const head = `<div class="sp-prog-head">${fmt(total)} across ${fmt(rows.length)} ${l.unit}${rows.length === 1 ? '' : 's'} with participants (highest first)</div>`;
+  const list = rows.map(function(r) { return `<div class="sp-kv-row"><span class="k">${r.n}</span><span class="v">${fmt(r.v)}</span></div>`; }).join('');
+  return head + `<div class="sp-prog-list">${list}</div>`;
+}
+
+function programCountsBody(abbr) {
+  const layers = PROGRAM_LAYERS.filter(function(l) { return l.abbr === abbr; });
+  if (!layers.length) return '';
+  let head;
+  if (layers.length > 1) {
+    head = `<div class="sp-prog-filter">Program: <select onchange="programCountsSelect('${abbr}', this.value)">`
+      + layers.map(function(l, i) { return `<option value="${i}">${l.label}</option>`; }).join('')
+      + `</select></div>`;
+  } else {
+    head = `<div class="sp-prog-filter one">${layers[0].label}</div>`;
+  }
+  return head + `<div id="prog-counts-table">${programCountsTable(abbr, 0)}</div>`;
+}
+
+function programCountsSelect(abbr, i) {
+  const el = document.getElementById('prog-counts-table');
+  if (el) el.innerHTML = programCountsTable(abbr, parseInt(i, 10) || 0);
+}
+
 // ---- Access analysis (the actionable supply-vs-demand synthesis) ----
 function card(num, lbl) { return `<div class="sp-card"><div class="num">${num}</div><div class="lbl">${lbl}</div></div>`; }
 function openAbout() { document.getElementById('about-page').classList.add('open'); }
@@ -655,6 +709,10 @@ function showStateProfile(abbr) {
   // access analysis (open) and school characteristics (collapsed).
   let html = schoolToggleCallout(abbr);
   html += drawer('Access analysis &mdash; supply vs. demand', accessBody(profile, abbr), true);
+  const progCounts = programCountsBody(abbr);
+  if (progCounts) {
+    html += drawer('Reported program counts by area', progCounts, false);
+  }
   if (profile.schools) {
     html += drawer('School characteristics (from directories)', characteristicsBody(profile.schools), false);
   }
@@ -811,12 +869,12 @@ function makeClusterGroup() {
     clusterPane: 'schoolsPane',
     iconCreateFunction: function(c) {
       const count = c.getChildCount();
-      let size = 30;
-      if (count >= 250) size = 50;
-      else if (count >= 50) size = 46;
-      else if (count >= 10) size = 38;
+      let size = 20;
+      if (count >= 250) size = 34;
+      else if (count >= 50) size = 28;
+      else if (count >= 10) size = 24;
       return L.divIcon({
-        html: `<div class="cluster-icon" style="background:#eb6834;width:${size}px;height:${size}px;font-size:${size > 40 ? 13 : 11.5}px;">${count}</div>`,
+        html: `<div class="cluster-icon" style="background:#eb6834;width:${size}px;height:${size}px;font-size:${size >= 28 ? 11 : 9.5}px;">${count}</div>`,
         className: 'school-cluster-wrapper',
         iconSize: L.point(size, size)
       });
@@ -1165,7 +1223,7 @@ addrForm.addEventListener('submit', function(e) {
 
 // Under type="module" the top-level scope isn't global, so expose the handlers
 // referenced by inline onclick="" attributes in the profile panel / About page.
-Object.assign(window, { calloutToggleSchools, calloutSetMode, openAbout, closeAbout, showStateProfile });
+Object.assign(window, { calloutToggleSchools, calloutSetMode, openAbout, closeAbout, showStateProfile, programCountsSelect });
 </script>
 </body>
 </html>
