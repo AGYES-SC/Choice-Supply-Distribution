@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>School Choice Program Distribution &mdash; National Map</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<style>
+  :root {
+    --surface-1: #fcfcfb;
+    --page-plane: #f9f9f7;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #898781;
+    --gridline: #e1e0d9;
+    --border: rgba(11,11,11,0.10);
+    --accent: #eb6834;
+    --accent-dark: #b8481c;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page-plane);
+    color: var(--text-primary);
+  }
+  #app { display: flex; flex-direction: column; height: 100vh; }
+  header {
+    padding: 9px 20px;
+    background: var(--surface-1);
+    border-bottom: 1px solid var(--gridline);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  header .hd-titles { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
+  header h1 { font-size: 16px; font-weight: 700; margin: 0; color: var(--text-primary); letter-spacing: -0.01em; white-space: nowrap; }
+  header .subtitle { font-size: 12px; color: var(--text-muted); }
+  @media (max-width: 720px) { header .subtitle { display: none; } }
+  #addr-search { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  #addr-input {
+    width: 320px; max-width: 46vw; padding: 8px 11px; font-size: 13px;
+    border: 1px solid var(--border); border-radius: 7px; background: var(--page-plane);
+    color: var(--text-primary); outline: none;
+  }
+  #addr-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(235,104,52,0.18); }
+  #addr-search button {
+    padding: 8px 15px; font-size: 13px; font-weight: 600; cursor: pointer;
+    background: var(--accent); color: #fff; border: none; border-radius: 7px;
+  }
+  #addr-search button:hover { background: var(--accent-dark); }
+  #addr-search button:disabled { opacity: 0.6; cursor: default; }
+  #addr-status { font-size: 11.5px; color: var(--text-muted); flex-basis: 100%; min-height: 0; }
+  #addr-status.error { color: var(--accent-dark); }
+  .search-pin { font-size: 24px; line-height: 1; text-align: center; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4)); }
+  #map { flex: 1; min-height: 0; position: relative; }
+  /* water-toned fill so any area past the tile edge (e.g. west of Alaska) reads
+     as ocean rather than blank gray */
+  .leaflet-container { background: #d3dde0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .region-map { position: absolute; overflow: hidden; }
+  .region-map.active { inset: 0; z-index: 400; border: none; border-radius: 0; }
+  .region-map.inset {
+    z-index: 1000; border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15); background: var(--surface-1);
+  }
+  .region-map.slot-a { left: 12px; bottom: 14px; width: 232px; height: 146px; }
+  .region-map.slot-b { left: 254px; bottom: 14px; width: 188px; height: 120px; }
+  .region-canvas { position: absolute; inset: 0; }
+  .region-map .inset-label {
+    position: absolute; top: 5px; left: 6px; z-index: 690; font-size: 11px; font-weight: 700;
+    color: var(--text-primary); background: rgba(252,252,251,0.9); padding: 1px 7px;
+    border-radius: 4px; pointer-events: none;
+  }
+  .region-map.active .inset-label { display: none; }
+  .region-map .promote-overlay { position: absolute; inset: 0; z-index: 680; cursor: pointer; display: none; }
+  .region-map.inset .promote-overlay { display: block; }
+  .region-map.inset .promote-overlay:hover { background: rgba(235,104,52,0.10); }
+  .region-map.inset .leaflet-control-zoom, .region-map.inset .leaflet-control-layers { display: none; }
+  @media (max-width: 640px) { .region-map.slot-b { display: none; } }
+  #region-switch {
+    position: absolute; left: 12px; bottom: 14px; z-index: 1000; display: flex;
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px;
+    overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  }
+  #region-switch button {
+    background: var(--surface-1); border: none; padding: 7px 13px; font-size: 12px;
+    font-weight: 600; color: var(--text-secondary); cursor: pointer;
+  }
+  #region-switch button + button { border-left: 1px solid var(--border); }
+  #region-switch button.active { background: var(--accent); color: #fff; }
+  #region-switch button:hover:not(.active) { background: var(--page-plane); }
+  .zip-tooltip, .school-tooltip, .poly-tooltip { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .zip-tooltip .zt-head, .school-tooltip .zt-head, .poly-tooltip .zt-head {
+    font-weight: 700; font-size: 13px; color: var(--text-primary); margin-bottom: 3px;
+  }
+  .zip-tooltip .zt-total, .poly-tooltip .zt-total { font-size: 12.5px; color: var(--text-primary); margin-bottom: 5px; }
+  .zip-tooltip .zt-total b, .poly-tooltip .zt-total b { font-variant-numeric: tabular-nums; }
+  .zip-tooltip table { border-collapse: collapse; font-size: 11.5px; color: var(--text-secondary); }
+  .zip-tooltip td { padding: 1px 6px 1px 0; font-variant-numeric: tabular-nums; }
+  .zip-tooltip td.q-label { color: var(--text-muted); padding-right: 8px; }
+  .school-tooltip { font-size: 12px; color: var(--text-secondary); max-width: 240px; }
+  .school-tooltip .zt-sub { color: var(--text-muted); font-size: 11.5px; margin-bottom: 4px; }
+  .school-tooltip .zt-row { display: flex; justify-content: space-between; gap: 10px; }
+  .school-tooltip .zt-approx { color: var(--accent-dark); font-size: 10.5px; margin-top: 4px; font-style: italic; }
+  .school-tooltip .zt-boost { color: #6b1a42; font-size: 11px; margin-top: 4px; font-weight: 600; }
+  .leaflet-tooltip.zip-tt, .leaflet-tooltip.school-tt, .leaflet-tooltip.poly-tt {
+    background: var(--surface-1); border: 1px solid var(--border);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15); border-radius: 6px; padding: 8px 10px;
+  }
+  .cluster-icon {
+    border: 2px solid #ffffff; border-radius: 50%; color: #ffffff;
+    font-weight: 700; font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+  }
+  .leaflet-control-layers {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px;
+    font-size: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+  }
+  .leaflet-control-layers-expanded { max-height: 78vh; overflow-y: auto; max-width: 292px; padding: 12px 14px; }
+  .leaflet-control-layers-list::before {
+    content: "Map layers"; display: block; font-weight: 700; font-size: 13px;
+    color: var(--text-primary); margin-bottom: 2px;
+  }
+  .leaflet-control-layers-base::before {
+    content: "Private-school overlay"; display: block; font-size: 10px; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--text-muted); font-weight: 600; margin: 10px 0 5px;
+  }
+  .leaflet-control-layers-overlays::before {
+    content: "Program distribution"; display: block; font-size: 10px; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--text-muted); font-weight: 600; margin: 10px 0 5px;
+  }
+  .leaflet-control-layers-separator { display: none; }
+  .leaflet-control-layers label { margin-bottom: 4px; line-height: 1.3; }
+  .leaflet-control-layers label span { display: inline-flex; align-items: flex-start; gap: 6px; }
+  .leaflet-control-layers-toggle { width: 36px; height: 36px; }
+
+  /* ---- state profile panel ---- */
+  #state-profile {
+    position: absolute;
+    top: 56px;
+    right: 12px;
+    bottom: 12px;
+    width: 320px;
+    max-width: calc(100vw - 24px);
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+    z-index: 1000;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #state-profile.open { display: flex; }
+  #state-profile .sp-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--gridline);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border-top: 5px solid var(--accent);
+  }
+  #state-profile .sp-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+  #state-profile .sp-close {
+    background: none; border: none; cursor: pointer; font-size: 20px; line-height: 1;
+    color: var(--text-muted); padding: 2px 6px; border-radius: 4px;
+  }
+  #state-profile .sp-close:hover { background: var(--gridline); color: var(--text-primary); }
+  #state-profile .sp-body { padding: 14px 16px; overflow-y: auto; flex: 1; }
+  #state-profile .sp-section { margin-bottom: 16px; }
+  #state-profile .sp-section:last-child { margin-bottom: 0; }
+  #state-profile .sp-label {
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--text-muted); font-weight: 600; margin-bottom: 4px;
+  }
+  #state-profile .sp-stat { font-size: 24px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+  #state-profile .sp-stat-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  #state-profile .sp-subhead {
+    font-size: 12.5px; font-weight: 700; color: var(--text-primary); margin: 10px 0 6px;
+  }
+  #state-profile .sp-bar-row { margin-bottom: 6px; }
+  #state-profile .sp-bar-label {
+    display: flex; justify-content: space-between; font-size: 11.5px; color: var(--text-secondary); margin-bottom: 2px;
+  }
+  #state-profile .sp-bar-label b { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+  #state-profile .sp-bar-track { height: 6px; border-radius: 3px; background: var(--gridline); overflow: hidden; }
+  #state-profile .sp-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; }
+  #state-profile .sp-note { font-size: 10.5px; color: var(--text-muted); margin-top: 8px; line-height: 1.4; }
+  #state-profile .sp-source { font-size: 10px; color: var(--text-muted); margin-top: 6px; line-height: 1.4; font-style: italic; }
+  #state-profile .sp-empty { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+  #state-profile .sp-callout {
+    background: #fff4ee; border: 1px solid rgba(235,104,52,0.35);
+    border-radius: 8px; padding: 12px 14px; margin-bottom: 16px;
+  }
+  #state-profile .sp-callout p { margin: 0 0 9px; font-size: 12px; color: var(--text-secondary); line-height: 1.45; }
+  #state-profile .sp-callout p:last-child { margin-bottom: 0; }
+  #state-profile .sp-callout button {
+    background: var(--accent); color: #fff; border: none; border-radius: 6px;
+    padding: 7px 13px; font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  #state-profile .sp-callout button:hover { background: var(--accent-dark); }
+  #state-profile .sp-callout .sp-toggle-row { margin: 2px 0 9px; }
+  #state-profile .sp-callout button.ghost { background: none; color: var(--accent-dark); border: 1px solid var(--border); }
+  #state-profile .sp-callout button.ghost:hover { background: var(--page-plane); }
+  #state-profile .sp-callout .sp-seg {
+    display: inline-flex; border: 1px solid var(--border); border-radius: 6px;
+    overflow: hidden; margin-bottom: 9px;
+  }
+  #state-profile .sp-callout .sp-seg button {
+    background: var(--surface-1); color: var(--text-secondary); border: none;
+    border-radius: 0; padding: 6px 13px; font-size: 11.5px; font-weight: 600;
+  }
+  #state-profile .sp-callout .sp-seg button + button { border-left: 1px solid var(--border); }
+  #state-profile .sp-callout .sp-seg button.active { background: var(--accent); color: #fff; }
+  #state-profile .sp-callout .sp-seg button:hover:not(.active) { background: var(--page-plane); }
+  #state-profile .sp-callout .sp-callout-note { font-size: 11px; color: var(--text-muted); margin: 0; }
+  #sp-reopen {
+    position: absolute; top: 12px; right: 12px; z-index: 1000;
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.12); cursor: pointer; padding: 8px 13px;
+    font-size: 12px; font-weight: 600; color: var(--text-primary); display: none;
+  }
+  #sp-reopen:hover { background: var(--gridline); }
+  #sp-reopen.show { display: block; }
+  #state-profile .sp-schoollist {
+    margin-top: 8px; max-height: 300px; overflow-y: auto;
+    border: 1px solid var(--gridline); border-radius: 6px;
+  }
+  #state-profile .sp-school-row {
+    display: flex; flex-direction: column; gap: 1px;
+    padding: 6px 9px; border-bottom: 1px solid var(--gridline);
+  }
+  #state-profile .sp-school-row:last-child { border-bottom: none; }
+  #state-profile .sp-school-name { font-size: 12px; color: var(--text-primary); font-weight: 600; }
+  #state-profile .sp-school-meta { font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  #state-profile .sp-linkbtn {
+    background: none; border: 1px solid var(--border); border-radius: 6px;
+    padding: 9px 12px; font-size: 12px; font-weight: 600; color: var(--accent-dark);
+    cursor: pointer; width: 100%; text-align: left;
+  }
+  #state-profile .sp-linkbtn:hover { background: var(--page-plane); border-color: var(--accent); }
+  #state-profile .sp-drawer { border: 1px solid var(--gridline); border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
+  #state-profile .sp-drawer > summary {
+    list-style: none; cursor: pointer; padding: 11px 14px; font-size: 12.5px; font-weight: 700;
+    color: var(--text-primary); background: var(--page-plane);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  #state-profile .sp-drawer > summary::-webkit-details-marker { display: none; }
+  #state-profile .sp-drawer > summary::after { content: '\25B8'; color: var(--text-muted); font-size: 12px; transition: transform .15s; }
+  #state-profile .sp-drawer[open] > summary::after { transform: rotate(90deg); }
+  #state-profile .sp-drawer-body { padding: 12px 14px; }
+  #state-profile .sp-metric-big { text-align: center; padding: 4px 0 2px; }
+  #state-profile .sp-metric-num { font-size: 34px; font-weight: 800; color: var(--accent-dark); font-variant-numeric: tabular-nums; line-height: 1; }
+  #state-profile .sp-metric-lbl { font-size: 11px; color: var(--text-secondary); margin-top: 4px; line-height: 1.3; }
+  #state-profile .sp-interpret {
+    font-size: 12px; color: var(--text-primary); background: #fff4ee;
+    border: 1px solid rgba(235,104,52,0.3); border-radius: 6px; padding: 8px 10px; margin: 10px 0; line-height: 1.4;
+  }
+  #state-profile .sp-kv-row { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; padding: 6px 0; border-bottom: 1px solid var(--gridline); }
+  #state-profile .sp-kv-row:last-child { border-bottom: none; }
+  #state-profile .sp-kv-row .k { color: var(--text-secondary); }
+  #state-profile .sp-kv-row .v { color: var(--text-primary); font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+  #state-profile .sp-lead { font-size: 13.5px; line-height: 1.5; color: var(--text-primary); margin: 4px 0 12px; }
+  #state-profile .sp-cards { display: flex; gap: 8px; margin-bottom: 10px; }
+  #state-profile .sp-card { flex: 1; background: var(--page-plane); border: 1px solid var(--gridline); border-radius: 8px; padding: 11px 8px; text-align: center; }
+  #state-profile .sp-card .num { font-size: 21px; font-weight: 800; color: var(--accent-dark); font-variant-numeric: tabular-nums; line-height: 1.05; }
+  #state-profile .sp-card .lbl { font-size: 10.5px; color: var(--text-secondary); margin-top: 5px; line-height: 1.25; }
+  #state-profile .sp-howlink { background: none; border: none; color: var(--accent-dark); font-size: 12px; font-weight: 600; cursor: pointer; padding: 4px 0; }
+  #state-profile .sp-howlink:hover { text-decoration: underline; }
+  header #about-btn { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; font-size: 11.5px; font-weight: 600; color: var(--text-secondary); cursor: pointer; white-space: nowrap; }
+  header #about-btn:hover { background: var(--page-plane); color: var(--text-primary); }
+  #about-page { position: fixed; inset: 0; z-index: 3000; background: var(--surface-1); overflow-y: auto; display: none; }
+  #about-page.open { display: block; }
+  #about-page .about-inner { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; }
+  #about-page h2 { font-size: 25px; margin: 0 0 6px; color: var(--text-primary); letter-spacing: -0.01em; }
+  #about-page .about-sub { color: var(--text-muted); font-size: 13px; margin-bottom: 8px; }
+  #about-page h3 { font-size: 16px; margin: 28px 0 8px; color: var(--text-primary); }
+  #about-page p, #about-page li { font-size: 14px; line-height: 1.62; color: var(--text-secondary); }
+  #about-page b { color: var(--text-primary); }
+  #about-page ul { padding-left: 20px; margin: 6px 0; }
+  #about-page li { margin-bottom: 7px; }
+  #about-page .about-lead { font-size: 15.5px; line-height: 1.55; color: var(--text-primary); border-left: 3px solid var(--accent); padding-left: 14px; margin: 18px 0 4px; }
+  #about-page .about-close { position: fixed; top: 16px; right: 20px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; z-index: 3001; box-shadow: 0 2px 10px rgba(0,0,0,0.12); }
+  #about-page .about-close:hover { background: var(--gridline); }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="hd-titles">
+      <h1>Choice Supply Distribution Map</h1>
+      <span class="subtitle">School-choice program participation &amp; private-school supply across the U.S.</span>
+      <button id="about-btn" type="button" onclick="openAbout()">About &amp; methodology</button>
+    </div>
+    <form id="addr-search" autocomplete="off">
+      <input id="addr-input" type="text" placeholder="Search any U.S. address, city, or ZIP&hellip;" aria-label="Search an address" />
+      <button type="submit">Go</button>
+      <span id="addr-status" role="status"></span>
+    </form>
+  </header>
+  <div id="map">
+    <div class="region-map active" id="region-conus"><div class="region-canvas" id="map-conus"></div></div>
+    <div id="region-switch" role="group" aria-label="Jump to region">
+      <button type="button" data-region="conus" class="active">U.S.</button>
+      <button type="button" data-region="ak">Alaska</button>
+      <button type="button" data-region="hi">Hawaii</button>
+    </div>
+    <button id="sp-reopen" aria-label="Show summary">&#9776;&nbsp; Summary</button>
+    <div id="state-profile">
+      <div class="sp-header">
+        <div class="sp-title" id="sp-title">State</div>
+        <button class="sp-close" id="sp-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="sp-body" id="sp-body"></div>
+    </div>
+  </div>
+</div>
+<div id="about-page">
+  <button class="about-close" type="button" onclick="closeAbout()">&times; Close</button>
+  <div class="about-inner">
+    <h2>About this map</h2>
+    <div class="about-sub">How to read it, where the numbers come from, and what they mean &mdash; in plain terms.</div>
+
+    <p class="about-lead">This map puts two things side by side for each state: how many families use its school-choice program, and where private schools actually are. Together they answer one question &mdash; <b>when families get school-choice funding, is there a private school near them to use it?</b></p>
+
+    <h3>The two things being measured</h3>
+    <ul>
+      <li><b>Participation (the demand).</b> How many students, accounts, or scholarships a program has &mdash; the colored areas on the map. Straight from each state's official program report.</li>
+      <li><b>Private schools (the supply).</b> Where private schools are and how many students they hold &mdash; the dots on the map.</li>
+    </ul>
+
+    <h3>Where the numbers come from</h3>
+    <ul>
+      <li><b>Private-school lists:</b> 17 states publish their own official private-school directory &mdash; we use those. For every other state we use the U.S. Department of Education's national private-school survey (NCES).</li>
+      <li><b>School size (seats):</b> a few states report enrollment directly; for the rest we borrow it from the NCES survey (2023&ndash;24). About 1 in 7 schools is too new to appear in that survey and shows no seat count.</li>
+      <li><b>Program participation:</b> each state's own school-choice program report.</li>
+      <li><b>Number of children:</b> the U.S. Census Bureau's American Community Survey (ACS), used to turn raw counts into per-child rates.</li>
+    </ul>
+
+    <h3>What the headline stats mean</h3>
+    <ul>
+      <li><b>Take-up</b> &mdash; the share of a state's school-age children who use the program. Higher means the program reaches more families.</li>
+      <li><b>Participants per private-school seat</b> &mdash; program users divided by private-school seats. Below&nbsp;1 means there are more seats than users (room to spare). Well above&nbsp;1 means far more users than local private seats &mdash; a sign the money is going to homeschooling, microschools, or online, not brick-and-mortar private schools.</li>
+      <li><b>"No private school nearby"</b> &mdash; the share of children who live in an area (zip, county, or district) that has no private school at all. This is the clearest measure of whether access is spread evenly or concentrated in a few places.</li>
+    </ul>
+
+    <h3>Things to keep in mind</h3>
+    <ul>
+      <li>Census and NCES figures are <b>estimates</b> and a <b>couple of years old</b> &mdash; good for comparing places, not exact head-counts.</li>
+      <li>Programs count different things (students vs. accounts vs. scholarships), so <b>state totals aren't apples-to-apples</b>.</li>
+      <li>A few areas are missing data, which can nudge access to look slightly better or worse than it is; we flag these where they matter.</li>
+      <li>Alaska and Hawaii sit in their own boxes (bottom-left) &mdash; click either to view it full-screen, and click the U.S. box to return.</li>
+    </ul>
+
+    <p style="margin-top:24px;font-size:12.5px;color:var(--text-muted);">Full technical source citations for every number are in the project's <b>data/profiles/sources.json</b> and the <b>scripts/pipeline/</b> documentation.</p>
+  </div>
+</div>
+<script type="module">
+// Big datasets are FETCHED at runtime (served by GitHub Pages / any static host)
+// rather than inlined, keeping index.html lean. These files must sit next to
+// index.html at the site root. Preview via the Pages URL or a local server
+// (python3 -m http.server from the folder holding index.html) — file:// blocks
+// these fetches.
+const _fj = async (p) => (await fetch(p)).json();
+const [
+  azGeo, azGeoFy2026, flGeo, txGeo, nhGeo, wvGeo, ncGeo, mdGeo, akGeo, riGeo, inGeo, wiGeo,
+  stateBoundariesGeo, SCHOOLS_ALL
+] = await Promise.all([
+  _fj('az_zip.geojson'), _fj('az_zip_fy2026.geojson'),
+  _fj('fl_districts.geojson'), _fj('tx_districts.geojson'),
+  _fj('nh_counties.geojson'), _fj('wv_counties.geojson'),
+  _fj('nc_counties.geojson'), _fj('md_counties.geojson'),
+  _fj('ak_districts.geojson'), _fj('ri_zip.geojson'),
+  _fj('in_counties.geojson'), _fj('wi_zip.geojson'),
+  _fj('state_boundaries_50.geojson'), _fj('schools_all.json')
+]);
+const SCHOOL_COLORS = {"GA":"#933c1f","WY":"#1f935e","AR":"#801f93","OK":"#85931f","UT":"#931f41","OH":"#1f931f","IN":"#411f93","AL":"#93631f","TN":"#1f9385","AK":"#931f80","ID":"#5e931f","SC":"#1f3c93","IA":"#93241f","LA":"#1f9346","RI":"#681f93","MT":"#938a1f","SD":"#1f7b93","NV":"#931f59","PA":"#37931f","VA":"#291f93","KS":"#934b1f","MS":"#1f936d","KY":"#8f1f93","ND":"#76931f","CO":"#1f5493","NE":"#931f32","MO":"#1f932e","AZ":"#eb6834","FL":"#0f7a56","TX":"#8a5a00","NH":"#33267d","WV":"#7a0f0f","NC":"#0a5c0a","WI":"#1f6393","MD":"#6b1a42"};
+
+const azEdges = [1,17,72,256,598,1072,1653,6698];
+const azRamp = ["#cde2fb","#9ec5f4","#6da7ec","#3987e5","#256abf","#184f95","#0d366b"];
+const azFy2026Edges = [2,21,78,263,653,1058,1609,7115];
+const azFy2026Ramp = ["#d0ebf1","#a0e0ee","#5fd8f2","#14d6ff","#00b0d6","#0086a3","#005c70"];
+const flEdges = [9,64,132,295,537,952,2853,21490];
+const flRamp = ["#d4ede4","#aae4cf","#72deb8","#34e0a2","#19bd82","#109364","#096746"];
+const txEdges = [30,40,58,84,137,220,441,3327];
+const txRamp = ["#f1e6d0","#eed5a0","#f2c35f","#ffb414","#d69200","#a36f00","#704c00"];
+const nhEdges = [271,289,342,485,847,1450,1587,3812];
+const nhRamp = ["#dbd8e9","#b9b4da","#8f85cc","#6251c3","#4535a2","#33267d","#221957"];
+const wvEdges = [6,17,39,68,102,245,506,1293];
+const wvRamp = ["#edd4d4","#e4aaaa","#de7372","#e03534","#be1a18","#941110","#670909"];
+const ncEdges = [2,82,173,340,532,874,2109,14521];
+const ncRamp = ["#d0f1d0","#a0eea0","#5ff25f","#14ff14","#00d600","#00a300","#007000"];
+const mdEdges = [0,1,5,12,15,35,346,944];
+const mdRamp = ["#f3d9e6","#e9b3cd","#df8cb4","#d55f99","#c23a7e","#98285f","#6b1a42"];
+const akEdges = [1,21,25,78,156,557,1885,7486];
+const akRamp = ["#ecd5dd","#e3abc0","#dc749b","#dc3775","#ba1c58","#911242","#650b2d"];
+const riEdges = [1,1,3,5,9,15,30,63];
+const riRamp = ["#d3eeee","#a7e7e7","#6ce5e5","#29eaea","#0fc7c7","#089b9b","#036d6d"];
+const inEdges = [0,0,0,124,251,392,1019,18076];
+const inRamp = ["#dcd5eb","#bcade0","#9478d8","#6a3dd6","#4d22b4","#39178c","#270e62"];
+const wiEdges = [4,25,43,60,101,226,478,7609];
+const wiRamp = ["#d5e2eb","#adcbe0","#78b1d8","#3d97d6","#2278b4","#175c8c","#0e3f62"];
+
+const STATE_PROFILES = {"AL":{"name":"Alabama","abbr":"AL","program":null,"schools":{"count":623,"approx":117,"religion":{"Not reported":623},"level":{"Not reported":218,"Combined":292,"Secondary":28,"Elementary":85},"coed":{"Not reported":623},"type":{"Not reported":623},"sourceLabel":"state directory","sourceKey":"AL_SCHOOLS","totalEnrollment":78784,"schoolsWithEnrollment":226,"seatsStateReported":0,"seatsNces":226,"schoolsNoSeats":397},"access":{"hasProgram":false,"schools":623,"seats":78784,"schoolsWithSeats":226,"seatsCoveragePct":36,"seatsPerSchool":349}},"AK":{"name":"Alaska","abbr":"AK","program":{"label":"Correspondence Study students (FY2024)","total":22959,"unit":"students","areaCount":29,"areaLabel":"school district","topName":"Galena City School District","topValue":7486},"schools":{"count":25,"approx":2,"religion":{"Other religious":13,"Nonsectarian":7,"Catholic":5},"level":{"Combined":12,"Elementary":12,"Secondary":1},"coed":{"Coed":25},"type":{"Alternative":3,"Regular Elementary/Secondary":16,"Montessori":4,"Special Program Emphasis":1,"Early Childhood/Day Care":1},"totalEnrollment":2869,"schoolsWithEnrollment":25,"seatsStateReported":0,"seatsNces":25,"schoolsNoSeats":0},"access":{"hasProgram":true,"schools":25,"seats":2869,"schoolsWithSeats":25,"seatsCoveragePct":100,"seatsPerSchool":115,"participation":22959,"unit":"Correspondence students","areaUnit":"school district","areas":29,"participantsPerSeat":8.0,"participantsPerSchool":918,"areasNoSupply":23,"pctPartNoSupply":81,"corr":0.11,"corrStrength":"weak","spearman":0.26,"capacitySignal":"demand far exceeds local private-school capacity \u2014 much of the program is used outside brick-and-mortar private schools (home, micro, or online)","schoolAgePop":115644,"popCoveragePct":100,"takeUpRatePct":19.9,"seatsPer1000Kids":25,"acsPrivatePct":15.6,"pctChildrenInDesert":30,"accessGini":0.49,"rateCorr":-0.12}},"AZ":{"name":"Arizona","abbr":"AZ","schools":{"count":304,"approx":11,"religion":{"Other religious":125,"Nonsectarian":121,"Catholic":58},"level":{"Combined":96,"Elementary":181,"Secondary":26,"Not reported":1},"coed":{"Coed":287,"All-male":3,"Not reported":10,"All-female":4},"type":{"Regular Elementary/Secondary":173,"Special Education":33,"Special Program Emphasis":15,"Alternative":9,"Montessori":31,"Early Childhood/Day Care":30,"Not reported":13},"totalEnrollment":59626,"schoolsWithEnrollment":300,"seatsStateReported":0,"seatsNces":300,"schoolsNoSeats":4},"programs":[{"label":"ESA accounts (FY2024, Q1-Q4 combined)","total":286855,"unit":"accounts","areaCount":376,"areaLabel":"zip code","topName":"85142","topValue":6698,"sourceKey":"AZ"},{"label":"ESA accounts (FY2026, Q1-Q3, partial year)","total":294057,"unit":"accounts","areaCount":379,"areaLabel":"zip code","topName":"85142","topValue":7115,"sourceKey":"AZ_FY2026"}],"access":{"hasProgram":true,"schools":304,"seats":59626,"schoolsWithSeats":300,"seatsCoveragePct":99,"seatsPerSchool":199,"participation":286855,"unit":"ESA accounts (FY2024)","areaUnit":"zip code","areas":376,"participantsPerSeat":4.81,"participantsPerSchool":944,"areasNoSupply":233,"pctPartNoSupply":34,"corr":0.4,"corrStrength":"moderate","spearman":0.59,"capacitySignal":"demand far exceeds local private-school capacity \u2014 much of the program is used outside brick-and-mortar private schools (home, micro, or online)","schoolAgePop":1193206,"popCoveragePct":100,"takeUpRatePct":24.0,"seatsPer1000Kids":50,"acsPrivatePct":10.9,"pctChildrenInDesert":35,"accessGini":0.72,"rateCorr":-0.0}},"AR":{"name":"Arkansas","abbr":"AR","program":null,"schools":{"count":100,"approx":100,"religion":{"Not reported":100},"level":{"Combined":53,"Elementary":42,"Secondary":5},"coed":{"Not reported":100},"type":{"Not reported":100},"sourceLabel":"state directory","sourceKey":"AR_SCHOOLS","totalEnrollment":10691,"schoolsWithEnrollment":36,"seatsStateReported":0,"seatsNces":36,"schoolsNoSeats":64},"access":{"hasProgram":false,"schools":100,"seats":10691,"schoolsWithSeats":36,"seatsCoveragePct":36,"seatsPerSchool":297}},"CA":{"name":"California","abbr":"CA","program":null,"schools":null},"CO":{"name":"Colorado","abbr":"CO","program":null,"schools":{"count":268,"approx":11,"religion":{"Other religious":114,"Nonsectarian":106,"Catholic":48},"level":{"Elementary":170,"Combined":74,"Secondary":24},"coed":{"Coed":260,"Not reported":5,"All-female":1,"All-male":2},"type":{"Early Childhood/Day Care":31,"Alternative":17,"Montessori":35,"Regular Elementary/Secondary":153,"Special Program Emphasis":19,"Not reported":2,"Special Education":11},"totalEnrollment":45206,"schoolsWithEnrollment":268,"seatsStateReported":0,"seatsNces":268,"schoolsNoSeats":0},"access":{"hasProgram":false,"schools":268,"seats":45206,"schoolsWithSeats":268,"seatsCoveragePct":100,"seatsPerSchool":169}},"CT":{"name":"Connecticut","abbr":"CT","program":null,"schools":null},"DE":{"name":"Delaware","abbr":"DE","program":null,"schools":null},"FL":{"name":"Florida","abbr":"FL","program":{"label":"FTC Scholarship students (2022-23)","total":100025,"unit":"students","areaCount":67,"areaLabel":"school district","topName":"Dade County School District","topValue":21490},"schools":{"count":3357,"approx":380,"religion":{"Other religious":1479,"Nonsectarian":1656,"Catholic":222},"level":{"Combined":1974,"Not reported":348,"Elementary":839,"Secondary":196},"coed":{"Coed":3297,"All-female":16,"Not reported":20,"All-male":24},"type":{"Not reported":3357},"totalEnrollment":505443,"schoolsWithEnrollment":3036,"sourceLabel":"state directory","sourceKey":"FL_SCHOOLS","seatsStateReported":3009,"seatsNces":27,"schoolsNoSeats":321},"access":{"hasProgram":true,"schools":3357,"seats":505443,"schoolsWithSeats":3036,"seatsCoveragePct":90,"seatsPerSchool":166,"participation":100025,"unit":"FTC scholarship students","areaUnit":"school district","areas":67,"participantsPerSeat":0.2,"participantsPerSchool":30,"areasNoSupply":1,"pctPartNoSupply":0,"corr":0.97,"corrStrength":"strong","spearman":0.94,"capacitySignal":"ample private-school capacity relative to program use","schoolAgePop":3248481,"popCoveragePct":100,"takeUpRatePct":3.1,"seatsPer1000Kids":155,"acsPrivatePct":15.9,"pctChildrenInDesert":0,"accessGini":0.19,"rateCorr":0.17}},"GA":{"name":"Georgia","abbr":"GA","program":null,"schools":{"count":609,"approx":31,"religion":{"Nonsectarian":206,"Other religious":368,"Catholic":35},"level":{"Elementary":265,"Combined":303,"Secondary":37,"Not reported":4},"coed":{"Coed":584,"All-male":10,"All-female":4,"Not reported":11},"type":{"Montessori":49,"Not reported":27,"Regular Elementary/Secondary":384,"Special Education":38,"Alternative":26,"Special Program Emphasis":30,"Early Childhood/Day Care":54,"Vocational/Technical":1},"totalEnrollment":134313,"schoolsWithEnrollment":601,"seatsStateReported":0,"seatsNces":601,"schoolsNoSeats":8},"access":{"hasProgram":false,"schools":609,"seats":134313,"schoolsWithSeats":601,"seatsCoveragePct":99,"seatsPerSchool":223}},"HI":{"name":"Hawaii","abbr":"HI","program":null,"schools":null},"ID":{"name":"Idaho","abbr":"ID","program":null,"schools":{"count":143,"approx":10,"religion":{"Not reported":143},"level":{"Elementary":23,"Combined":104,"Secondary":15,"Not reported":1},"coed":{"Not reported":143},"type":{"Not reported":143},"sourceLabel":"state directory","sourceKey":"ID_SCHOOLS","totalEnrollment":14971,"schoolsWithEnrollment":78,"seatsStateReported":0,"seatsNces":78,"schoolsNoSeats":65},"access":{"hasProgram":false,"schools":143,"seats":14971,"schoolsWithSeats":78,"seatsCoveragePct":55,"seatsPerSchool":192}},"IL":{"name":"Illinois","abbr":"IL","program":null,"schools":null},"IN":{"name":"Indiana","abbr":"IN","program":{"label":"Choice Scholarship students (2024-25, Period 1 + 2 combined)","total":75930,"unit":"students","areaCount":92,"areaLabel":"county","topName":"Marion County","topValue":18076},"schools":{"count":417,"approx":26,"religion":{"Not reported":417},"level":{"Combined":317,"Secondary":45,"Elementary":55},"coed":{"Not reported":417},"type":{"In-Person":398,"Hybrid":12,"Virtual":7},"sourceLabel":"state directory","sourceKey":"IN_SCHOOLS","totalEnrollment":87876,"schoolsWithEnrollment":309,"seatsStateReported":0,"seatsNces":309,"schoolsNoSeats":108},"access":{"hasProgram":true,"schools":417,"seats":87876,"schoolsWithSeats":309,"seatsCoveragePct":74,"seatsPerSchool":284,"participation":75930,"unit":"Choice students","areaUnit":"county","areas":92,"participantsPerSeat":0.86,"participantsPerSchool":182,"areasNoSupply":0,"pctPartNoSupply":0,"corr":0.99,"corrStrength":"strong","spearman":0.93,"capacitySignal":"program use is roughly balanced with private-school capacity","schoolAgePop":1185186,"popCoveragePct":100,"takeUpRatePct":6.4,"seatsPer1000Kids":74,"acsPrivatePct":14.6,"pctChildrenInDesert":11,"accessGini":0.39,"rateCorr":0.86}},"IA":{"name":"Iowa","abbr":"IA","program":null,"schools":{"count":256,"approx":20,"religion":{"Not reported":256},"level":{"Elementary":171,"Combined":43,"Secondary":42},"coed":{"Not reported":256},"type":{"Not reported":256},"sourceLabel":"state directory","sourceKey":"IA_SCHOOLS","totalEnrollment":36102,"schoolsWithEnrollment":150,"seatsStateReported":0,"seatsNces":150,"schoolsNoSeats":106},"access":{"hasProgram":false,"schools":256,"seats":36102,"schoolsWithSeats":150,"seatsCoveragePct":59,"seatsPerSchool":241}},"KS":{"name":"Kansas","abbr":"KS","program":null,"schools":{"count":137,"approx":14,"religion":{"Not reported":137},"level":{"Elementary":65,"Secondary":21,"Not reported":51},"coed":{"Not reported":137},"type":{"Not reported":137},"totalEnrollment":28636,"schoolsWithEnrollment":131,"sourceLabel":"state directory","sourceKey":"KS_SCHOOLS","seatsStateReported":111,"seatsNces":20,"schoolsNoSeats":6},"access":{"hasProgram":false,"schools":137,"seats":28636,"schoolsWithSeats":131,"seatsCoveragePct":96,"seatsPerSchool":219}},"KY":{"name":"Kentucky","abbr":"KY","program":null,"schools":{"count":192,"approx":33,"religion":{"Not reported":192},"level":{"Combined":147,"Secondary":29,"Elementary":16},"coed":{"Not reported":192},"type":{"Not reported":192},"sourceLabel":"state directory","sourceKey":"KY_SCHOOLS","totalEnrollment":47229,"schoolsWithEnrollment":150,"seatsStateReported":0,"seatsNces":150,"schoolsNoSeats":42},"access":{"hasProgram":false,"schools":192,"seats":47229,"schoolsWithSeats":150,"seatsCoveragePct":78,"seatsPerSchool":315}},"LA":{"name":"Louisiana","abbr":"LA","program":null,"schools":{"count":361,"approx":7,"religion":{"Not reported":361},"level":{"Secondary":45,"Elementary":53,"Combined":263},"coed":{"Not reported":361},"type":{"Not reported":361},"sourceLabel":"state directory","sourceKey":"LA_SCHOOLS","totalEnrollment":84836,"schoolsWithEnrollment":237,"seatsStateReported":0,"seatsNces":237,"schoolsNoSeats":124},"access":{"hasProgram":false,"schools":361,"seats":84836,"schoolsWithSeats":237,"seatsCoveragePct":66,"seatsPerSchool":358}},"ME":{"name":"Maine","abbr":"ME","program":null,"schools":null},"MD":{"name":"Maryland","abbr":"MD","program":{"label":"BOOST scholarship students (2025-26)","total":2796,"unit":"students","areaCount":23,"areaLabel":"county of residence","topName":"Baltimore City","topValue":944,"sourceKey":"MD"},"schools":{"count":535,"approx":8,"religion":{"Catholic":121,"Nonsectarian":197,"Other religious":217},"level":{"Secondary":56,"Elementary":323,"Combined":154,"Not reported":2},"coed":{"All-female":17,"Coed":489,"All-male":23,"Not reported":6},"type":{"Regular Elementary/Secondary":338,"Early Childhood/Day Care":57,"Montessori":56,"Alternative":9,"Special Program Emphasis":16,"Special Education":46,"Not reported":13},"sourceLabel":"NCES directory","sourceKey":"MD_SCHOOLS","totalEnrollment":115352,"schoolsWithEnrollment":530,"seatsStateReported":0,"seatsNces":530,"schoolsNoSeats":5},"access":{"hasProgram":true,"schools":535,"seats":115352,"schoolsWithSeats":530,"seatsCoveragePct":99,"seatsPerSchool":218,"participation":2796,"unit":"BOOST students","areaUnit":"county","areas":24,"participantsPerSeat":0.02,"participantsPerSchool":5,"areasNoSupply":1,"pctPartNoSupply":0,"corr":0.73,"corrStrength":"strong","spearman":0.88,"capacitySignal":"program use is far below private-school capacity","schoolAgePop":1020122,"popCoveragePct":100,"takeUpRatePct":0.3,"seatsPer1000Kids":113,"acsPrivatePct":15.0,"pctChildrenInDesert":0,"accessGini":0.21,"rateCorr":0.31},"boost":{"participatingSchools":152,"participatingStudents":2796,"totalAward":9505154,"avgAwardPerStudent":3400,"privateSchoolsInState":535,"pctPrivateSchoolsParticipating":28,"matchedToDirectory":125,"topSchoolName":"Bais Yaakov School for Girls","topSchoolStudents":307,"top5SharePct":31,"countiesWithParticipation":19}},"MA":{"name":"Massachusetts","abbr":"MA","program":null,"schools":null},"MI":{"name":"Michigan","abbr":"MI","program":null,"schools":null},"MN":{"name":"Minnesota","abbr":"MN","program":null,"schools":null},"MS":{"name":"Mississippi","abbr":"MS","program":null,"schools":{"count":174,"approx":11,"religion":{"Other religious":125,"Nonsectarian":26,"Catholic":23},"level":{"Secondary":16,"Combined":94,"Elementary":64},"coed":{"Coed":169,"All-male":3,"Not reported":2},"type":{"Regular Elementary/Secondary":132,"Montessori":4,"Early Childhood/Day Care":16,"Special Education":7,"Not reported":8,"Special Program Emphasis":3,"Alternative":4},"totalEnrollment":40544,"schoolsWithEnrollment":173,"seatsStateReported":0,"seatsNces":173,"schoolsNoSeats":1},"access":{"hasProgram":false,"schools":174,"seats":40544,"schoolsWithSeats":173,"seatsCoveragePct":99,"seatsPerSchool":234}},"MO":{"name":"Missouri","abbr":"MO","program":null,"schools":{"count":496,"approx":30,"religion":{"Other religious":215,"Nonsectarian":89,"Catholic":192},"level":{"Elementary":323,"Combined":121,"Secondary":50,"Not reported":2},"coed":{"Coed":468,"All-male":14,"All-female":9,"Not reported":5},"type":{"Regular Elementary/Secondary":398,"Montessori":26,"Special Education":21,"Not reported":12,"Alternative":15,"Early Childhood/Day Care":7,"Special Program Emphasis":17},"totalEnrollment":94610,"schoolsWithEnrollment":491,"seatsStateReported":0,"seatsNces":491,"schoolsNoSeats":5},"access":{"hasProgram":false,"schools":496,"seats":94610,"schoolsWithSeats":491,"seatsCoveragePct":99,"seatsPerSchool":193}},"MT":{"name":"Montana","abbr":"MT","program":null,"schools":{"count":106,"approx":9,"religion":{"Nonsectarian":36,"Other religious":49,"Catholic":21},"level":{"Combined":33,"Elementary":59,"Not reported":1,"Secondary":13},"coed":{"Coed":103,"All-male":1,"All-female":2},"type":{"Regular Elementary/Secondary":69,"Special Program Emphasis":10,"Montessori":13,"Alternative":9,"Special Education":3,"Early Childhood/Day Care":2},"totalEnrollment":11087,"schoolsWithEnrollment":105,"seatsStateReported":0,"seatsNces":105,"schoolsNoSeats":1},"access":{"hasProgram":false,"schools":106,"seats":11087,"schoolsWithSeats":105,"seatsCoveragePct":99,"seatsPerSchool":106}},"NE":{"name":"Nebraska","abbr":"NE","program":null,"schools":{"count":173,"approx":6,"religion":{"Catholic":97,"Other religious":64,"Nonsectarian":12},"level":{"Elementary":119,"Combined":34,"Secondary":19,"Not reported":1},"coed":{"Coed":165,"All-male":3,"All-female":3,"Not reported":2},"type":{"Regular Elementary/Secondary":159,"Special Education":4,"Montessori":5,"Early Childhood/Day Care":2,"Not reported":3},"totalEnrollment":34440,"schoolsWithEnrollment":172,"seatsStateReported":0,"seatsNces":172,"schoolsNoSeats":1},"access":{"hasProgram":false,"schools":173,"seats":34440,"schoolsWithSeats":172,"seatsCoveragePct":99,"seatsPerSchool":200}},"NV":{"name":"Nevada","abbr":"NV","program":null,"schools":{"count":95,"approx":0,"religion":{"Nonsectarian":37,"Other religious":48,"Catholic":10},"level":{"Elementary":63,"Combined":25,"Secondary":7},"coed":{"Coed":91,"Not reported":2,"All-female":1,"All-male":1},"type":{"Early Childhood/Day Care":7,"Not reported":5,"Special Program Emphasis":10,"Regular Elementary/Secondary":61,"Montessori":7,"Special Education":2,"Vocational/Technical":1,"Alternative":2},"totalEnrollment":21689,"schoolsWithEnrollment":95,"seatsStateReported":0,"seatsNces":95,"schoolsNoSeats":0},"access":{"hasProgram":false,"schools":95,"seats":21689,"schoolsWithSeats":95,"seatsCoveragePct":100,"seatsPerSchool":228}},"NH":{"name":"New Hampshire","abbr":"NH","program":{"label":"EFA enrollees (SY2025-26)","total":10510,"unit":"enrollees","areaCount":10,"areaLabel":"county","topName":"Hillsborough County","topValue":3812},"schools":{"count":133,"approx":133,"religion":{"Not reported":133},"level":{"Not reported":133},"coed":{"Not reported":133},"type":{"Not reported":133},"sourceLabel":"state directory","sourceKey":"NH_SCHOOLS","totalEnrollment":10987,"schoolsWithEnrollment":80,"seatsStateReported":0,"seatsNces":80,"schoolsNoSeats":53},"access":{"hasProgram":true,"schools":133,"seats":10987,"schoolsWithSeats":80,"seatsCoveragePct":60,"seatsPerSchool":137,"participation":10510,"unit":"EFA enrollees","areaUnit":"county","areas":10,"participantsPerSeat":0.96,"participantsPerSchool":79,"areasNoSupply":0,"pctPartNoSupply":0,"corr":0.94,"corrStrength":"strong","spearman":0.98,"capacitySignal":"program use is roughly balanced with private-school capacity","schoolAgePop":191701,"popCoveragePct":100,"takeUpRatePct":5.5,"seatsPer1000Kids":57,"acsPrivatePct":13.0,"pctChildrenInDesert":0,"accessGini":0.19,"rateCorr":0.5}},"NJ":{"name":"New Jersey","abbr":"NJ","program":null,"schools":null},"NM":{"name":"New Mexico","abbr":"NM","program":null,"schools":null},"NY":{"name":"New York","abbr":"NY","program":null,"schools":null},"NC":{"name":"North Carolina","abbr":"NC","program":{"label":"Opportunity Scholarship recipients (2024-25)","total":106867,"unit":"recipients","areaCount":100,"areaLabel":"county","topName":"Wake County","topValue":14521},"schools":{"count":971,"approx":107,"religion":{"Not reported":971},"level":{"Not reported":971},"coed":{"Not reported":971},"type":{"Not reported":971},"sourceLabel":"state directory","sourceKey":"NC_SCHOOLS","totalEnrollment":118165,"schoolsWithEnrollment":512,"seatsStateReported":0,"seatsNces":512,"schoolsNoSeats":459},"access":{"hasProgram":true,"schools":971,"seats":118165,"schoolsWithSeats":512,"seatsCoveragePct":53,"seatsPerSchool":231,"participation":106867,"unit":"Opportunity recipients","areaUnit":"county","areas":100,"participantsPerSeat":0.9,"participantsPerSchool":110,"areasNoSupply":12,"pctPartNoSupply":1,"corr":0.97,"corrStrength":"strong","spearman":0.89,"capacitySignal":"program use is roughly balanced with private-school capacity","schoolAgePop":1731937,"popCoveragePct":100,"takeUpRatePct":6.2,"seatsPer1000Kids":68,"acsPrivatePct":13.6,"pctChildrenInDesert":3,"accessGini":0.3,"rateCorr":0.58}},"ND":{"name":"North Dakota","abbr":"ND","program":null,"schools":{"count":59,"approx":8,"religion":{"Not reported":59},"level":{"Elementary":27,"Combined":28,"Secondary":4},"coed":{"Not reported":59},"type":{"Not reported":59},"sourceLabel":"state directory","sourceKey":"ND_SCHOOLS","totalEnrollment":6005,"schoolsWithEnrollment":35,"seatsStateReported":0,"seatsNces":35,"schoolsNoSeats":24},"access":{"hasProgram":false,"schools":59,"seats":6005,"schoolsWithSeats":35,"seatsCoveragePct":59,"seatsPerSchool":172}},"OH":{"name":"Ohio","abbr":"OH","program":null,"schools":{"count":896,"approx":39,"religion":{"Not reported":896},"level":{"Combined":646,"Elementary":156,"Secondary":94},"coed":{"Not reported":896},"type":{"Not reported":896},"sourceLabel":"state directory","sourceKey":"OH_SCHOOLS","totalEnrollment":164821,"schoolsWithEnrollment":620,"seatsStateReported":0,"seatsNces":620,"schoolsNoSeats":276},"access":{"hasProgram":false,"schools":896,"seats":164821,"schoolsWithSeats":620,"seatsCoveragePct":69,"seatsPerSchool":266}},"OK":{"name":"Oklahoma","abbr":"OK","program":null,"schools":{"count":139,"approx":3,"religion":{"Catholic":28,"Other religious":86,"Nonsectarian":25},"level":{"Elementary":76,"Secondary":6,"Combined":57},"coed":{"Coed":138,"All-male":1},"type":{"Regular Elementary/Secondary":108,"Montessori":8,"Special Program Emphasis":6,"Early Childhood/Day Care":8,"Special Education":5,"Alternative":3,"Not reported":1},"totalEnrollment":32306,"schoolsWithEnrollment":138,"seatsStateReported":0,"seatsNces":138,"schoolsNoSeats":1},"access":{"hasProgram":false,"schools":139,"seats":32306,"schoolsWithSeats":138,"seatsCoveragePct":99,"seatsPerSchool":234}},"OR":{"name":"Oregon","abbr":"OR","program":null,"schools":null},"PA":{"name":"Pennsylvania","abbr":"PA","program":null,"schools":{"count":1542,"approx":118,"religion":{"Other religious":795,"Nonsectarian":431,"Catholic":316},"level":{"Elementary":992,"Combined":424,"Secondary":123,"Not reported":3},"coed":{"Coed":1460,"All-male":30,"Not reported":29,"All-female":23},"type":{"Regular Elementary/Secondary":1076,"Early Childhood/Day Care":164,"Special Education":138,"Montessori":70,"Not reported":34,"Alternative":38,"Special Program Emphasis":20,"Vocational/Technical":2},"totalEnrollment":197088,"schoolsWithEnrollment":1525,"seatsStateReported":0,"seatsNces":1525,"schoolsNoSeats":17},"access":{"hasProgram":false,"schools":1542,"seats":197088,"schoolsWithSeats":1525,"seatsCoveragePct":99,"seatsPerSchool":129}},"RI":{"name":"Rhode Island","abbr":"RI","program":{"label":"SGO Scholarships (2025, 5 SGOs combined)","total":678,"unit":"scholarships","areaCount":50,"areaLabel":"zip code","topName":"Zip 02860","topValue":63},"schools":{"count":81,"approx":5,"religion":{"Not reported":81},"level":{"Not reported":81},"coed":{"Not reported":81},"type":{"Not reported":81},"sourceLabel":"state directory","sourceKey":"RI_SCHOOLS","totalEnrollment":6139,"schoolsWithEnrollment":28,"seatsStateReported":0,"seatsNces":28,"schoolsNoSeats":53},"access":{"hasProgram":true,"schools":81,"seats":6139,"schoolsWithSeats":28,"seatsCoveragePct":35,"seatsPerSchool":219,"participation":678,"unit":"SGO scholarships","areaUnit":"zip code","areas":50,"participantsPerSeat":0.11,"participantsPerSchool":8,"areasNoSupply":17,"pctPartNoSupply":9,"corr":0.3,"corrStrength":"weak","spearman":0.44,"capacitySignal":"ample private-school capacity relative to program use","schoolAgePop":148758,"popCoveragePct":100,"takeUpRatePct":0.5,"seatsPer1000Kids":38,"acsPrivatePct":13.2,"pctChildrenInDesert":56,"accessGini":0.75,"rateCorr":0.34}},"SC":{"name":"South Carolina","abbr":"SC","program":null,"schools":{"count":285,"approx":10,"religion":{"Other religious":181,"Nonsectarian":75,"Catholic":29},"level":{"Elementary":132,"Combined":145,"Secondary":8},"coed":{"Coed":275,"All-male":4,"Not reported":6},"type":{"Regular Elementary/Secondary":180,"Montessori":25,"Special Program Emphasis":11,"Early Childhood/Day Care":47,"Alternative":7,"Special Education":9,"Not reported":6},"totalEnrollment":58606,"schoolsWithEnrollment":285,"seatsStateReported":0,"seatsNces":285,"schoolsNoSeats":0},"access":{"hasProgram":false,"schools":285,"seats":58606,"schoolsWithSeats":285,"seatsCoveragePct":100,"seatsPerSchool":206}},"SD":{"name":"South Dakota","abbr":"SD","program":null,"schools":{"count":67,"approx":2,"religion":{"Catholic":23,"Other religious":31,"Nonsectarian":13},"level":{"Combined":22,"Elementary":42,"Secondary":3},"coed":{"Coed":65,"All-male":2},"type":{"Regular Elementary/Secondary":53,"Alternative":5,"Montessori":4,"Special Education":4,"Not reported":1},"totalEnrollment":12968,"schoolsWithEnrollment":67,"seatsStateReported":0,"seatsNces":67,"schoolsNoSeats":0},"access":{"hasProgram":false,"schools":67,"seats":12968,"schoolsWithSeats":67,"seatsCoveragePct":100,"seatsPerSchool":194}},"TN":{"name":"Tennessee","abbr":"TN","program":null,"schools":{"count":671,"approx":54,"religion":{"Not reported":671},"level":{"Combined":490,"Elementary":141,"Secondary":40},"coed":{"Not reported":671},"type":{"Not reported":671},"totalEnrollment":191437,"schoolsWithEnrollment":630,"sourceLabel":"state directory","sourceKey":"TN_SCHOOLS","seatsStateReported":628,"seatsNces":2,"schoolsNoSeats":41},"access":{"hasProgram":false,"schools":671,"seats":191437,"schoolsWithSeats":630,"seatsCoveragePct":94,"seatsPerSchool":304}},"TX":{"name":"Texas","abbr":"TX","program":{"label":"TEFA participants (2026-27)","total":79753,"unit":"students","areaCount":334,"areaLabel":"school district","topName":"Houston Independent School District","topValue":3327},"schools":{"count":1307,"approx":26,"religion":{"Nonsectarian":470,"Other religious":632,"Catholic":205},"level":{"Elementary":802,"Combined":428,"Secondary":75,"Not reported":2},"coed":{"Coed":1263,"All-female":12,"All-male":12,"Not reported":20},"type":{"Early Childhood/Day Care":212,"Regular Elementary/Secondary":705,"Montessori":184,"Special Program Emphasis":71,"Alternative":43,"Not reported":37,"Special Education":55},"totalEnrollment":259636,"schoolsWithEnrollment":1295,"seatsStateReported":0,"seatsNces":1295,"schoolsNoSeats":12},"access":{"hasProgram":true,"schools":1307,"seats":259636,"schoolsWithSeats":1295,"seatsCoveragePct":99,"seatsPerSchool":200,"participation":79753,"unit":"TEFA participants","areaUnit":"school district","areas":334,"participantsPerSeat":0.31,"participantsPerSchool":61,"areasNoSupply":118,"pctPartNoSupply":12,"corr":0.84,"corrStrength":"strong","spearman":0.68,"capacitySignal":"ample private-school capacity relative to program use","schoolAgePop":4906230,"popCoveragePct":97,"takeUpRatePct":1.6,"seatsPer1000Kids":52,"acsPrivatePct":9.3,"pctChildrenInDesert":11,"accessGini":0.48,"rateCorr":0.03}},"UT":{"name":"Utah","abbr":"UT","program":null,"schools":{"count":115,"approx":18,"religion":{"Not reported":115},"level":{"Elementary":27,"Secondary":24,"Combined":64},"coed":{"Not reported":115},"type":{"Not reported":115},"sourceLabel":"state directory","sourceKey":"UT_SCHOOLS","totalEnrollment":13330,"schoolsWithEnrollment":65,"seatsStateReported":0,"seatsNces":65,"schoolsNoSeats":50},"access":{"hasProgram":false,"schools":115,"seats":13330,"schoolsWithSeats":65,"seatsCoveragePct":57,"seatsPerSchool":205}},"VT":{"name":"Vermont","abbr":"VT","program":null,"schools":null},"VA":{"name":"Virginia","abbr":"VA","program":null,"schools":{"count":642,"approx":23,"religion":{"Other religious":267,"Nonsectarian":301,"Catholic":74},"level":{"Elementary":347,"Combined":241,"Not reported":4,"Secondary":50},"coed":{"Coed":614,"Not reported":8,"All-female":7,"All-male":13},"type":{"Regular Elementary/Secondary":346,"Special Education":67,"Early Childhood/Day Care":79,"Montessori":91,"Not reported":16,"Special Program Emphasis":25,"Alternative":18},"totalEnrollment":117521,"schoolsWithEnrollment":633,"seatsStateReported":0,"seatsNces":633,"schoolsNoSeats":9},"access":{"hasProgram":false,"schools":642,"seats":117521,"schoolsWithSeats":633,"seatsCoveragePct":99,"seatsPerSchool":186}},"WA":{"name":"Washington","abbr":"WA","program":null,"schools":null},"WV":{"name":"West Virginia","abbr":"WV","program":{"label":"Hope Scholarship recipients (2024-25)","total":10530,"unit":"recipients","areaCount":55,"areaLabel":"county","topName":"Kanawha County","topValue":1293},"schools":{"count":100,"approx":12,"religion":{"Other religious":66,"Catholic":21,"Nonsectarian":13},"level":{"Combined":46,"Elementary":49,"Secondary":5},"coed":{"Coed":97,"All-male":1,"Not reported":2},"type":{"Regular Elementary/Secondary":81,"Early Childhood/Day Care":5,"Alternative":2,"Montessori":4,"Special Program Emphasis":4,"Special Education":2,"Not reported":2},"totalEnrollment":10477,"schoolsWithEnrollment":99,"seatsStateReported":0,"seatsNces":99,"schoolsNoSeats":1},"access":{"hasProgram":true,"schools":100,"seats":10477,"schoolsWithSeats":99,"seatsCoveragePct":99,"seatsPerSchool":106,"participation":10530,"unit":"Hope recipients","areaUnit":"county","areas":55,"participantsPerSeat":1.01,"participantsPerSchool":105,"areasNoSupply":18,"pctPartNoSupply":8,"corr":0.75,"corrStrength":"strong","spearman":0.79,"capacitySignal":"program use is roughly balanced with private-school capacity","schoolAgePop":267938,"popCoveragePct":100,"takeUpRatePct":3.9,"seatsPer1000Kids":39,"acsPrivatePct":11.1,"pctChildrenInDesert":14,"accessGini":0.51,"rateCorr":0.46}},"WI":{"name":"Wisconsin","abbr":"WI","program":{"label":"Choice Program (MPCP/RPCP/WPCP) + SNSP enrollment (2025-26, HC)","total":60927,"unit":"students","areaCount":201,"areaLabel":"zip code","topName":"53204","topValue":7609},"schools":{"count":444,"approx":11,"religion":{"Not reported":444},"level":{"Combined":77,"Elementary":304,"Secondary":63},"coed":{"Not reported":444},"totalEnrollment":60963,"schoolsWithEnrollment":444,"sourceLabel":"state directory","sourceKey":"WI","type":{"Regular Elementary/Secondary":444},"seatsStateReported":444,"seatsNces":0,"schoolsNoSeats":0},"access":{"hasProgram":true,"schools":444,"seats":60963,"schoolsWithSeats":444,"seatsCoveragePct":100,"seatsPerSchool":137,"participation":60927,"unit":"Choice headcount","areaUnit":"zip code","areas":201,"participantsPerSeat":1.0,"participantsPerSchool":137,"areasNoSupply":2,"pctPartNoSupply":1,"corr":0.99,"corrStrength":"strong","spearman":0.98,"capacitySignal":"program use is roughly balanced with private-school capacity","schoolAgePop":607017,"popCoveragePct":100,"takeUpRatePct":10.0,"seatsPer1000Kids":98,"acsPrivatePct":16.4,"pctChildrenInDesert":1,"accessGini":0.61,"rateCorr":0.96}},"WY":{"name":"Wyoming","abbr":"WY","program":null,"schools":{"count":29,"approx":0,"religion":{"Nonsectarian":11,"Other religious":12,"Catholic":6},"level":{"Elementary":16,"Combined":11,"Secondary":2},"coed":{"Coed":27,"All-male":1,"All-female":1},"type":{"Special Education":1,"Alternative":4,"Regular Elementary/Secondary":18,"Early Childhood/Day Care":1,"Montessori":3,"Special Program Emphasis":2},"totalEnrollment":2111,"schoolsWithEnrollment":29,"seatsStateReported":0,"seatsNces":29,"schoolsNoSeats":0},"access":{"hasProgram":false,"schools":29,"seats":2111,"schoolsWithSeats":29,"seatsCoveragePct":100,"seatsPerSchool":73}}};
+const FIPS_TO_ABBR = {"01":"AL","02":"AK","04":"AZ","05":"AR","06":"CA","08":"CO","09":"CT","10":"DE","12":"FL","13":"GA","15":"HI","16":"ID","17":"IL","18":"IN","19":"IA","20":"KS","21":"KY","22":"LA","23":"ME","24":"MD","25":"MA","26":"MI","27":"MN","28":"MS","29":"MO","30":"MT","31":"NE","32":"NV","33":"NH","34":"NJ","35":"NM","36":"NY","37":"NC","38":"ND","39":"OH","40":"OK","41":"OR","42":"PA","44":"RI","45":"SC","46":"SD","47":"TN","48":"TX","49":"UT","50":"VT","51":"VA","53":"WA","54":"WV","55":"WI","56":"WY"};
+const STATE_ACCENT = {"AZ":"#0d366b","FL":"#096746","TX":"#704c00","NH":"#221957","WV":"#670909","NC":"#007000","AK":"#650b2d","RI":"#036d6d","IN":"#270e62","WI":"#0e3f62","MD":"#6b1a42","GA":"#933c1f","WY":"#1f935e","AR":"#801f93","OK":"#85931f","UT":"#931f41","OH":"#1f931f","AL":"#93631f","TN":"#1f9385","ID":"#5e931f","SC":"#1f3c93","IA":"#93241f","LA":"#1f9346","MT":"#938a1f","SD":"#1f7b93","NV":"#931f59","PA":"#37931f","VA":"#291f93","KS":"#934b1f","MS":"#1f936d","KY":"#8f1f93","ND":"#76931f","CO":"#1f5493","NE":"#931f32","MO":"#1f932e"};
+const NATIONAL_PROFILE = {"name":"United States (all tracked states)","totalParticipation":765032,"programBreakdown":[{"abbr":"AZ","name":"Arizona","total":294057,"unit":"accounts","label":"ESA accounts (FY2026, Q1-Q3, partial year)"},{"abbr":"FL","name":"Florida","total":100025,"unit":"students","label":"FTC Scholarship students (2022-23)"},{"abbr":"NC","name":"North Carolina","total":106867,"unit":"recipients","label":"Opportunity Scholarship recipients (2024-25)"},{"abbr":"TX","name":"Texas","total":79753,"unit":"students","label":"TEFA participants (2026-27)"},{"abbr":"NH","name":"New Hampshire","total":10510,"unit":"enrollees","label":"EFA enrollees (SY2025-26)"},{"abbr":"WV","name":"West Virginia","total":10530,"unit":"recipients","label":"Hope Scholarship recipients (2024-25)"},{"abbr":"AK","name":"Alaska","total":22959,"unit":"students","label":"Correspondence Study students (FY2024)"},{"abbr":"RI","name":"Rhode Island","total":678,"unit":"scholarships","label":"SGO Scholarships (2025, 5 SGOs combined)"},{"abbr":"IN","name":"Indiana","total":75930,"unit":"students","label":"Choice Scholarship students (2024-25, Period 1 + 2 combined)"},{"abbr":"WI","name":"Wisconsin","total":60927,"unit":"students","label":"Choice Program (MPCP/RPCP/WPCP) + SNSP enrollment (2025-26, HC)"},{"abbr":"MD","name":"Maryland","total":2796,"unit":"students","label":"BOOST scholarships (2025-26)"}],"schools":{"count":15317,"approx":1387,"stateCount":34,"religion":{"Other religious":4670,"Nonsectarian":3635,"Catholic":1413,"Not reported":5599},"level":{"Combined":6664,"Elementary":5716,"Secondary":1116,"Not reported":1821},"coed":{"Coed":9388,"Not reported":5721,"All-male":125,"All-female":83},"totalEnrollment":2601512,"schoolsWithEnrollment":13068,"sourceLabel":"NCES + state directories","seatsStateReported":4192,"seatsNces":8876,"schoolsNoSeats":2249},"access":{"schools":15317,"seats":2601512,"seatsCoveragePct":85,"programStates":10,"ppsMin":["RI",0.11],"ppsMax":["AK",8.0],"ppsMedian":["NH",0.96],"corrMin":0.11,"corrMax":0.99,"usSchoolAgePop":54735609,"usPrivatePct":12.7}};
+const SOURCES = {"AZ":"Source: Arizona Department of Education, ESA Quarterly Reports, FY2024 Q1\u2013Q4 (combined by this analysis).","FL":"Source: Florida Office of Independent Education and Parental Choice, FTC Scholarship Program Quarterly Report, June 2023.","NC":"Source: North Carolina State Education Assistance Authority, Opportunity Scholarship Program report, 2024\u201325.","TX":"Source: Texas Comptroller of Public Accounts, TEFA Annual Demographic Report, 2026\u201327. Excludes districts with fewer than 30 participants (privacy suppression) and one non-district recipient (Harris County Dept. of Education).","NH":"Source: NH Department of Education, Division of Analytics and Resources, Education Freedom Account Data Fact Sheet, November 2025.","WV":"Source: West Virginia Hope Scholarship Board, 2024\u20132025 Annual Report (county-level recipient table).","AK":"Source: Alaska Dept. of Education & Early Development, Correspondence School Reporting, January 2025. District total adjusted +1 (Cordova City School District) to reconcile with the report\u2019s own statewide total.","RI":"Source: RI Division of Taxation, \"Summary of Scholarships Issued\" 2025 reports for 5 SGOs (FACE, ACSI, STEPS, FRIDS, StarScholars), combined by this analysis. One scholarship with an invalid zip code is excluded; one SGO subtotal (ACSI/Westbay) does not reconcile with its own row-level detail in the source document.","SCHOOLS":"Source: National Center for Education Statistics, Private School Universe Survey directory (most recent available year per state). Addresses geocoded via the US Census Bureau Geocoder, with OpenStreetMap Nominatim as fallback; some locations are approximate (city/zip-level) where a street address could not be resolved.","IN":"Source: Indiana Choice Scholarship Program Annual Report, Appendix H (Choice Scholarship Students by County of Residence), 2024\u201325 school year, Period One + Period Two combined by this analysis. Counts under 10 are asterisked in the source to comply with FERPA and are treated as 0 in this total (the report\u2019s own statewide total is 76,067; this county-level sum is 75,930 \u2014 the ~137-student gap reflects suppressed small counts across roughly a third of counties).","AZ_FY2026":"Source: Arizona Department of Education, ESA Quarterly Reports, FY2026 Q1\u2013Q3 (combined by this analysis). Q4 FY2026 has not yet been published as of this writing, so this is a partial-year (3 of 4 quarters) total, not directly comparable to the FY2024 full-year figure above.","WI":"Source: Wisconsin Dept. of Public Instruction, \"2025-26 School Year Student HC, FTE & Annualized Payment\" summary (Private School Choice Programs: MPCP, RPCP, WPCP + Special Needs Scholarship Program), 3rd Friday September 2025 count, cross-walked against the WI State Private School Directory for addresses. Methodology: the enrollment report lists one line per school/system (e.g. \"Assumption Catholic Schools - Wisconsin Rapids\") without a street address, only a name and township; the directory lists individual school campuses with full addresses but no enrollment figures. Each report line was matched to the directory by name + city; where a report line named a multi-campus system with several directory campuses in the same city (e.g. Assumption High School + Assumption Middle School, both Wisconsin Rapids), that system\u2019s enrollment was split evenly across its campuses so no students are lost and each campus appears on the map. One school (Trinity Lutheran School, West Bend) required falling back to a directory entry marked CLOSED (its most recent known address) since it has no OPEN entry as of the current directory snapshot despite reporting active enrollment. This crosswalk resolved 100% of the report\u2019s 60,972 statewide headcount to 444 geocoded campus locations across 201 zip codes (one small zip, 45 students, has no matching Census ZCTA boundary and is excluded from the choropleth). Because this required splitting/matching logic rather than a direct 1:1 address lookup, treat individual campus-level enrollment figures as good estimates rather than exact per-campus counts; the zip-level and statewide totals are exact.","NC_SCHOOLS":"Source: North Carolina Division of Non-Public Education, private school directory (\"Current Open Private Schools\"), January 2026 snapshot, replacing this map's earlier NCES Private School Universe Survey pull for North Carolina. 971 schools geocoded via the Census Bureau's batch geocoder (864 matched) with OpenStreetMap Nominatim as fallback for the remaining 107; one school's directory-listed city field was corrupted (it duplicated the street address instead) and was geocoded to its zip code's centroid instead of a street address. This directory does not report religious affiliation, coed status, school level, or enrollment, so those fields read \"Not reported\" throughout \u2014 unlike the NCES-derived data used for most other states.","IN_SCHOOLS":"Source: Indiana Department of Education, 2026-27 State Choice Private School Directory (PDF), replacing this map's earlier NCES pull for Indiana. 417 schools geocoded via the Census Bureau's batch geocoder (391 matched) with Nominatim as fallback for the remaining 26. The source PDF's text extraction concatenated each school's street address directly against its city with no separating space (e.g. \"127 N 4th StreetDecatur\"); addresses were split programmatically using known street-suffix boundaries and spot-checked against a 20-school random sample (one systematic bug found and fixed: cities beginning with \"South\", e.g. South Bend, were being mis-split). Grade level (bucketed to Elementary/Secondary/Combined) and instructional mode (In-Person/Hybrid/Virtual) are as reported in the directory; religious affiliation, coed status, and enrollment are not in this directory's fields.","RI_SCHOOLS":"Source: Rhode Island Department of Education, RIDE-approved Nonpublic Schools directory, SY2026-27 (PDF), replacing this map's earlier NCES pull for Rhode Island. 81 schools geocoded via the Census Bureau's batch geocoder (66 matched) with Nominatim as fallback for the remaining 15, including one school (The Prout School) whose row in the source PDF is missing its city/state/zip entirely; that one school's location was recovered by geocoding its street address and name directly, which resolved unambiguously to South Kingstown. The source PDF's text extraction ran each school's name directly against its administrative contact's name with no separating space (an artifact of the original document's column layout), so a number of \"name\" values here retain a trailing contact-name fragment; this does not affect the address/city/zip fields used to place each school, which were independently verified for all 81 schools. Religious affiliation, coed status, school level, and enrollment are not in this directory's fields.","NH_SCHOOLS":"Source: NH Department of Education, \"NH Nonpublic Schools by Approval Status\" directory (PDF), replacing this map's earlier NCES pull for New Hampshire. This directory lists each school's town of location but no street address at all, so all 133 schools are geocoded to their town's centroid via OpenStreetMap Nominatim rather than an exact address \u2014 every school in this list is flagged as an approximate location on the map. Religious affiliation, coed status, school level, and enrollment are not in this directory's fields.","FL_SCHOOLS":"Source: Florida Office of Independent Education and Parental Choice, State Private School Directory (2025-26), replacing this map's earlier NCES pull for Florida. 3,357 of 3,409 directory rows had a usable address (52 had none and were excluded); geocoded via the Census Bureau's batch geocoder (2,977 matched) with Nominatim as fallback for the remainder. A handful of rows had data-entry errors in the source spreadsheet \u2014 a school's city field containing a copy of its own zip code, an email address misfiled into the street-address column, and two schools listing an out-of-state administrative address for what appear to be online/virtual programs \u2014 each was individually corrected or, where no true street address could be determined, geocoded to its zip code's centroid. Unlike the NCES data used for most other states, this directory does report religious affiliation/denomination, coed status, grade level, and per-grade enrollment, all of which are retained here; it does not classify a school \"type\" (Montessori, special education, etc.), so that field reads \"Not reported\" for every Florida school.","LA_SCHOOLS":"Source: Louisiana Department of Education, 2025-26 State Private School Directory (\"NonPublic Schools\" sheet) \u2014 Louisiana's schools are newly added to this map with this release. Most schools (282 of 361) include the state's own latitude/longitude directly; the remainder were geocoded via the Census Bureau's batch geocoder with Nominatim as fallback, including one school whose listed street address was the literal placeholder text \"TBD\" and was geocoded to its city instead. Louisiana has no participation-program data loaded on this map yet, only its private-school directory. Religious affiliation, coed status, and enrollment are not in this directory's fields; school level is bucketed from each school's reported grade configuration.","AL_SCHOOLS":"Source: Alabama State Department of Education private school directory, replacing this map's earlier NCES pull. 623 schools (after dropping 154 exact-duplicate rows in the source workbook); geocoded via the Census Bureau's batch geocoder with Nominatim fallback. Many rows list a P.O. Box rather than a street address (geocoded to city/zip level) and several carry a placeholder '00000' zip (treated as missing). Two Nominatim matches landed out of state ('Phenix City' -> Phoenix AZ; 'Monroeville' -> Monroeville PA) and were corrected. Grade level is from the directory's Grade Range column (absent for ~1/3 of rows); religious affiliation, coed status, and enrollment are not reported.","AR_SCHOOLS":"Source: Arkansas Division of Elementary and Secondary Education private school locator, replacing this map's earlier NCES pull. 100 schools. The source packs the address into one newline-delimited cell, and only about half the rows have a street address or zip; because the Census geocoder resolved almost none of them, all 100 were geocoded via Nominatim - at street level where possible, otherwise at city level (the majority). Grade level is from the Grades Offered column; religious affiliation, coed status, and enrollment are not reported.","IA_SCHOOLS":"Source: Iowa Department of Education, 2026-27 Iowa Nonpublic School Building Directory (Preliminary), replacing this map's earlier NCES pull. 256 schools, geocoded via the Census Bureau's batch geocoder (236 matched) with Nominatim fallback. School level is Iowa's own classification (Elementary / K-12 / High / Middle / Preschool) mapped to this map's Elementary/Secondary/Combined buckets; religious affiliation, coed status, and enrollment are not reported.","ID_SCHOOLS":"Source: Idaho State Department of Education, Idaho Private Schools list (updated November 2025), replacing this map's earlier NCES pull. 143 of 151 rows had a usable address (8 dropped); geocoded via the Census Bureau's batch geocoder (133 matched) with Nominatim fallback for the rest. Grade level is from the Grades Served column; religious affiliation, coed status, and enrollment are not reported.","KS_SCHOOLS":"Source: Kansas State Department of Education, Private Accredited Educational Organizations and Schools listing from the 2025-2026 Kansas Educational Directory, replacing this map's earlier NCES pull. 137 schools. The source is a block-per-school layout (not a table); each block was parsed for name, county, street address, city/zip, and the ELEM/MS/JH/SH enrollment line (111 schools have a nonzero enrollment). Five schools have no city/zip line in the source and were placed from a city tag in the school name, a same-address sibling, or their county seat. School level is inferred from level keywords in each school's name; religious affiliation and coed status are not reported. Geocoded via the Census Bureau's batch geocoder (123 matched) with Nominatim fallback.","KY_SCHOOLS":"Source: Kentucky Department of Education, KBE Certified Non-Public Schools directory, replacing this map's earlier NCES pull. 192 schools parsed from the PDF table. The street-address/city split has no delimiter in the source text and was resolved with a list of known two-word Kentucky place names (Fort Knox, Fort Campbell, Pippa Passes, Pewee Valley, Cox's Creek, etc.); grade level is from the grade-span column. Two Nominatim matches first resolved to a same-named place in another state ('Florence' and a 'Hagar Hill' typo) and were corrected. Religious affiliation, coed status, and enrollment are not reported. Geocoded via the Census Bureau's batch geocoder (159 matched) with Nominatim fallback.","ND_SCHOOLS":"Source: North Dakota Department of Public Instruction statewide school directory, filtered to the 59 rows classified 'Nonpublic School' (the source file lists all public and nonpublic schools together), replacing this map's earlier NCES pull. Physical address preferred over mailing address; grade level from the Grade Span column. Religious affiliation, coed status, and enrollment are not reported. Geocoded via the Census Bureau's batch geocoder (51 matched) with Nominatim fallback.","OH_SCHOOLS":"Source: Ohio Department of Education and Workforce nonpublic school directory, replacing this map's earlier NCES pull. 896 open nonpublic schools. The single combined mailing-address cell was split from the right (zip, state, city, then street) so commas inside a street address survive; grade level from the Grade Span column. Religious affiliation, coed status, and enrollment are not reported. Geocoded via the Census Bureau's batch geocoder in ~150-row chunks (857 matched) with Nominatim fallback.","TN_SCHOOLS":"Source: Tennessee Department of Education private school directory (three category sheets, combined), replacing this map's earlier NCES pull. 671 schools with a Tennessee address (rows whose listed address is out of state - several on the online-schools sheet - are excluded). Tennessee reports enrollment: PreK plus K-12 student counts are summed (628 of 671 schools have a nonzero total). Grade level from the Grade Span column; religious affiliation and coed status are not reported. Geocoded via the Census Bureau's batch geocoder in ~150-row chunks (617 matched) with Nominatim fallback.","UT_SCHOOLS":"Source: Utah State Board of Education (USBE) Schools Directory Export, filtered to the 115 private schools, replacing this map's earlier NCES pull. The Grades column had been silently reinterpreted as dates by Excel (e.g. a '9-12' range stored as 2026-09-12) and was recovered as month=low-grade, day=high-grade before bucketing to Elementary/Secondary/Combined. Religious affiliation, coed status, and enrollment are not reported. Geocoded via the Census Bureau's batch geocoder (97 matched) with Nominatim fallback for the rest, including several P.O. boxes placed at city/zip level.","SEATS":"Enrollment (\u201cseats\u201d) methodology: where a state's own directory reports enrollment (Florida, Tennessee, Kansas, Wisconsin) that figure is used as-is. For all other schools, enrollment is borrowed from the school's matching record in the NCES Private School Universe Survey (PSS), 2023-24 vintage, matched by school name + city (with conservative token-overlap fallbacks). These NCES-sourced seats are an access proxy, not a current-year count, and are flagged per school as \u201cNCES 2023-24\u201d in the tooltip. About 15% of schools match no PSS record (newer than the 2023-24 snapshot or not surveyed) and carry no seat figure, so seats-based totals undercount in those areas. When a newer PSS release is published, the same crosswalk is re-run against it.","ACS":"Per-child denominators from the U.S. Census Bureau, American Community Survey 2024 5-year, table B14003 (school enrollment by type, age, and sex), pulled at ZCTA, county, and unified-school-district geography to match each program's reporting unit. \u201cSchool-age population\u201d is ages 5-17 (public + private + not-enrolled), a close proxy for K-12; \u201cACS private-school attendance\u201d is the same table's private-school count for those ages. ACS 5-year figures are estimates with margins of error that widen for small areas. Access is joined to each choropleth area by ZIP/ZCTA code or county/district name (~99%+ matched; a few same-named Texas districts can't be disambiguated by name and contribute no population, shown as the population-coverage figure). The access Gini is population-weighted (seats per child across where children actually live).","MD":"Source: Maryland State Department of Education, Office of Accountability, BOOST (Broadening Options and Opportunities for Students Today) Scholarship Program, Joint Chairman's Report FY2025-26 (January 2026), table \u201cScholarships Awarded and Accepted by Applicant County of Residence\u201d (pp. 36-37). Counts are BOOST scholarships awarded AND accepted, mapped by the applicant's county of residence (where participating families live), not the school's location. Statewide: 2,796 students / $9,505,154 across 23 jurisdictions; Kent County reported none and is shown as 0. Private-school locations for Maryland come from the NCES directory (see MD_SCHOOLS), which enables the supply-side (seats/access) and BOOST participating-school analysis shown in the panel.","MD_SCHOOLS":"Source: NCES Private School Universe Survey directory for Maryland (535 schools), geocoded via the US Census Bureau batch geocoder (496 matched) with OpenStreetMap Nominatim as fallback for the remaining 39; 8 schools resolved only to city/zip level. Schools that enroll BOOST scholarship students are flagged from the program's own by-school table (Joint Chairman's Report FY2025-26, \u201cScholarships Awarded and Accepted by School County Location and School Name,\u201d pp. 9-22), which lists 152 participating schools enrolling 2,796 students totaling $9,505,154; 125 were matched to a school in this NCES directory by name within county, and the rest \u2014 several newer than or absent from the NCES snapshot \u2014 are counted in the aggregate BOOST metrics but not shown on an individual school dot."};
+
+function fmt(n) { return n.toLocaleString('en-US'); }
+
+function colorFor(v, edges, ramp) {
+  for (let i = 0; i < edges.length - 1; i++) {
+    if (v <= edges[i+1] || i === edges.length - 2) return ramp[i];
+  }
+  return ramp[ramp.length - 1];
+}
+
+// ---- state profile panel logic ----
+const spPanel = document.getElementById('state-profile');
+const spTitle = document.getElementById('sp-title');
+const spBody = document.getElementById('sp-body');
+const spReopen = document.getElementById('sp-reopen');
+let profileClosed = false;
+
+// The X genuinely closes the panel (and reveals a "Summary" button to bring it
+// back), rather than just resetting to the national view as it did before.
+function openPanel() { profileClosed = false; spReopen.classList.remove('show'); spPanel.classList.add('open'); }
+function closeProfile() { profileClosed = true; spPanel.classList.remove('open'); spReopen.classList.add('show'); }
+document.getElementById('sp-close').addEventListener('click', closeProfile);
+spReopen.addEventListener('click', showNationalProfile);
+
+// Used by the address search: if the whole map is currently hidden, turn on the
+// clustered overlay for every state so nearby supply is visible.
+function enableSchoolsLayer() {
+  if (aggregateSchoolMode() === 'none') setAllSchoolMode('clustered');
+}
+// Re-render whichever profile view is open so its toggle reflects the map.
+function refreshCurrentView() {
+  if (currentView === 'national') showNationalProfile();
+  else if (currentView === 'state' && currentAbbr) showStateProfile(currentAbbr);
+}
+// scope = null  -> whole map (national summary + the left-side layers control)
+// scope = abbr  -> that ONE state (program schools live in per-state layers, so
+//                  a state panel toggles only its own dots).
+function calloutToggleSchools(scope) {
+  const cur = scope ? SCHOOL[scope].mode : aggregateSchoolMode();
+  const target = (cur === 'none') ? 'clustered' : 'none';
+  if (scope) setStateSchoolMode(scope, target); else setAllSchoolMode(target);
+  refreshCurrentView();
+}
+function calloutSetMode(scope, mode) {
+  if (scope) setStateSchoolMode(scope, mode); else setAllSchoolMode(mode);
+  refreshCurrentView();
+}
+// Shared toggle block. scope null = national summary (whole map); scope = abbr =
+// a state panel (that state only).
+function schoolToggleCallout(scope) {
+  const mode = scope ? (SCHOOL[scope] ? SCHOOL[scope].mode : 'none') : aggregateSchoolMode();
+  const shown = mode !== 'none';
+  const scopeArg = scope ? "'" + scope + "'" : 'null';
+  const stName = scope && STATE_PROFILES[scope] ? STATE_PROFILES[scope].name : 'this state';
+  const note = scope
+    ? 'Affects <b>' + stName + '</b> only. Use the national summary or the top-left Map layers control for the whole map.'
+    : 'Toggles the whole map. Open a state to control just that state &mdash; also in the top-left Map layers control.';
+  return `
+    <div class="sp-callout">
+      <p><b>Private schools ${shown ? 'shown' : 'hidden'}${scope ? ' \u2014 ' + stName : ''}.</b> ${shown
+        ? 'Switch how they&rsquo;re drawn, or hide them.'
+        : 'Overlay them to see supply alongside participation.'}</p>
+      <div class="sp-toggle-row">
+        <button class="${shown ? 'ghost' : ''}" onclick="calloutToggleSchools(${scopeArg})">${shown ? 'Hide' : 'Show'} ${scope ? 'these schools' : 'all schools'}</button>
+      </div>
+      <div class="sp-seg" role="group" aria-label="Private-school display mode">
+        <button class="${mode === 'clustered' ? 'active' : ''}" onclick="calloutSetMode(${scopeArg}, 'clustered')">Clustered</button>
+        <button class="${mode === 'exact' ? 'active' : ''}" onclick="calloutSetMode(${scopeArg}, 'exact')">Exact locations</button>
+      </div>
+      <p class="sp-callout-note">${note}</p>
+    </div>`;
+}
+
+let currentAbbr = null;
+let currentView = 'national';  // 'national' | 'state' | 'search'
+
+function barRows(dict, total) {
+  const entries = Object.entries(dict).sort((a,b) => b[1]-a[1]);
+  return entries.map(([label, count]) => {
+    const pct = total > 0 ? Math.round((count/total)*100) : 0;
+    return `
+      <div class="sp-bar-row">
+        <div class="sp-bar-label"><span>${label}</span><b>${fmt(count)} (${pct}%)</b></div>
+        <div class="sp-bar-track"><div class="sp-bar-fill" style="width:${pct}%"></div></div>
+      </div>`;
+  }).join('');
+}
+
+function sourceNote(abbr) {
+  const src = SOURCES[abbr];
+  return src ? `<div class="sp-source">${src}</div>` : '';
+}
+
+function drawer(title, body, open) {
+  return `<details class="sp-drawer"${open ? ' open' : ''}><summary>${title}</summary><div class="sp-drawer-body">${body}</div></details>`;
+}
+function kv(k, v) { return `<div class="sp-kv-row"><span class="k">${k}</span><span class="v">${v}</span></div>`; }
+
+// ---- Access analysis (the actionable supply-vs-demand synthesis) ----
+function card(num, lbl) { return `<div class="sp-card"><div class="num">${num}</div><div class="lbl">${lbl}</div></div>`; }
+function openAbout() { document.getElementById('about-page').classList.add('open'); }
+function closeAbout() { document.getElementById('about-page').classList.remove('open'); }
+
+// Gold-standard supply-side view for programs with a by-school breakdown (MD BOOST):
+// which private schools actually enroll voucher students, and how concentrated.
+function boostSection(b) {
+  if (!b) return '';
+  return `<div class="sp-subhead">Where the scholarships actually go</div>
+    <p class="sp-lead" style="font-size:12.5px;">${fmt(b.participatingSchools)} of the state's ${fmt(b.privateSchoolsInState)} private schools (${b.pctPrivateSchoolsParticipating}%) enrolled a BOOST student, across ${b.countiesWithParticipation} counties &mdash; but the <b>top 5 schools take ${b.top5SharePct}%</b> of all recipients.</p>
+    <div class="sp-cards">
+      ${card(fmt(b.participatingSchools), 'private schools enroll BOOST students')}
+      ${card('$' + fmt(b.avgAwardPerStudent), 'average award per student')}
+      ${card(b.top5SharePct + '%', 'of recipients at the top 5 schools')}
+    </div>
+    <div class="sp-note">Largest: ${b.topSchoolName} (${fmt(b.topSchoolStudents)} students). Award total ${'$' + fmt(b.totalAward)}.</div>`;
+}
+
+function accessBody(profile, abbr) {
+  const a = profile.access;
+  const programList = profile.programs || (profile.program ? [profile.program] : []);
+  const demand = programList.map(function(p) {
+    return `<div class="sp-kv-row"><span class="k">${p.label}</span><span class="v">${fmt(p.total)} ${p.unit}</span></div>`;
+  }).join('');
+  if (!a) return demand || '<div class="sp-empty">No data loaded.</div>';
+
+  if (a.hasProgram && a.takeUpRatePct != null) {
+    let lead;
+    if (a.pctChildrenInDesert >= 25)
+      lead = `Access is <b>uneven</b> &mdash; about <b>${a.pctChildrenInDesert}%</b> of ${profile.name}'s school-age kids live where there's no private school to use the program.`;
+    else if (a.participantsPerSeat >= 1.5)
+      lead = `<b>Demand outstrips</b> local private schools &mdash; roughly ${a.participantsPerSeat} participants for every private-school seat, so much of the funding is used outside private schools.`;
+    else if (a.participantsPerSeat <= 0.75)
+      lead = `${profile.name} has <b>ample</b> private-school capacity &mdash; well under one participant per seat, and access is spread widely.`;
+    else
+      lead = `In ${profile.name}, program use is <b>roughly in line</b> with private-school capacity, and access is fairly widespread.`;
+    return `${demand}
+      <p class="sp-lead">${lead}</p>
+      <div class="sp-cards">
+        ${card(a.takeUpRatePct + '%', 'of school-age kids use it')}
+        ${card(a.participantsPerSeat, 'participants per private-school seat')}
+        ${card(a.pctChildrenInDesert + '%', 'of kids have no private school nearby')}
+      </div>
+      ${boostSection(profile.boost)}
+      <button class="sp-howlink" onclick="openAbout()">How we measure this &rarr;</button>`;
+  }
+  return `${demand}
+    <p class="sp-lead">${profile.name} has <b>${fmt(a.schools)}</b> private schools${a.seats ? ' (about ' + fmt(a.seats) + ' seats)' : ''}. No school-choice program is loaded here yet, so this is the supply picture only.</p>
+    <div class="sp-cards">
+      ${card(fmt(a.schools), 'private schools')}
+      ${card(a.seats ? fmt(a.seats) : 'n/a', 'private-school seats')}
+      ${card(a.seatsPerSchool ? fmt(a.seatsPerSchool) : 'n/a', 'avg seats per school')}
+    </div>
+    <button class="sp-howlink" onclick="openAbout()">How we measure this &rarr;</button>`;
+}
+
+function nationalAccessBody(n) {
+  const a = n.access;
+  return `
+    <p class="sp-lead">Nationwide, <b>${fmt(n.totalParticipation)}</b> students use a tracked school-choice program &mdash; but whether there's a private school to use it <b>varies enormously</b> by state.</p>
+    <div class="sp-cards">
+      ${card(a.usPrivatePct != null ? a.usPrivatePct + '%' : 'n/a', 'of U.S. kids attend private school')}
+      ${card(a.ppsMax[1], 'participants/seat in ' + a.ppsMax[0] + ' (tightest)')}
+      ${card(a.ppsMin[1], 'participants/seat in ' + a.ppsMin[0] + ' (loosest)')}
+    </div>
+    <p class="sp-lead" style="font-size:12.5px;color:var(--text-secondary);">Tuition-scholarship states (Florida, Texas, Rhode Island) have room to spare; ESA &amp; correspondence states (Arizona, Alaska) have far more users than local private seats &mdash; a sign the money goes to home, micro, or online schooling.</p>
+    <button class="sp-howlink" onclick="openAbout()">How we measure this &rarr;</button>
+    <div class="sp-note">Click any state on the map for its own numbers.</div>`;
+}
+
+// ---- School characteristics (the collapsed "additional data from the states") ----
+function characteristicsBody(s) {
+  let html = `
+    <div class="sp-stat">${fmt(s.count)}</div>
+    <div class="sp-stat-sub">private schools (${s.sourceLabel || 'NCES directory'})`;
+  if (s.totalEnrollment) {
+    html += ` &middot; ${fmt(s.totalEnrollment)} enrolled seats${s.seatsNces ? ` (${fmt(s.seatsStateReported || 0)} state-reported + ${fmt(s.seatsNces)} NCES 2023&ndash;24)` : ''}`;
+  }
+  html += `</div>
+    <div class="sp-subhead">Religious affiliation</div>${barRows(s.religion, s.count)}
+    <div class="sp-subhead">School level</div>${barRows(s.level, s.count)}
+    <div class="sp-subhead">Coed status</div>${barRows(s.coed, s.count)}`;
+  const typeKeys = s.type ? Object.keys(s.type) : [];
+  if (typeKeys.length && !(typeKeys.length === 1 && s.type['Not reported'])) {
+    html += `<div class="sp-subhead">School type</div>${barRows(s.type, s.count)}`;
+  }
+  if (s.approx > 0) html += `<div class="sp-note">${s.approx} of ${fmt(s.count)} schools geocoded at city/zip level (exact street address could not be resolved).</div>`;
+  html += sourceNote(s.sourceKey || 'SCHOOLS');
+  return html;
+}
+
+function showNationalProfile() {
+  currentAbbr = null;
+  currentView = 'national';
+  document.documentElement.style.setProperty('--accent', '#eb6834');
+  spTitle.textContent = NATIONAL_PROFILE.name;
+
+  const n = NATIONAL_PROFILE;
+  let html = schoolToggleCallout();
+  html += drawer('Access analysis &mdash; supply vs. demand', nationalAccessBody(n), true);
+  html += drawer('School characteristics (from directories)', characteristicsBody(n.schools), false);
+  html += `<div class="sp-note" style="margin-top:12px;">Click any state on the map for its full profile. Click empty ocean/land to return here, or the &times; to close this panel.</div>`;
+  spBody.innerHTML = html;
+  openPanel();
+}
+
+function showStateProfile(abbr) {
+  const profile = STATE_PROFILES[abbr];
+  if (!profile) return;
+  currentAbbr = abbr;
+  currentView = 'state';
+  document.documentElement.style.setProperty('--accent', STATE_ACCENT[abbr] || '#898781');
+  spTitle.textContent = profile.name;
+
+  if (!profile.program && !profile.programs && !profile.schools) {
+    spBody.innerHTML = schoolToggleCallout(abbr) + `<div class="sp-empty">No school-choice program participation data or private-school directory has been loaded yet for ${profile.name}.</div>`;
+    openPanel();
+    return;
+  }
+
+  // Same toggle as the national summary, but scoped to THIS state; then the
+  // access analysis (open) and school characteristics (collapsed).
+  let html = schoolToggleCallout(abbr);
+  html += drawer('Access analysis &mdash; supply vs. demand', accessBody(profile, abbr), true);
+  if (profile.schools) {
+    html += drawer('School characteristics (from directories)', characteristicsBody(profile.schools), false);
+  }
+  spBody.innerHTML = html;
+  openPanel();
+}
+
+// The main canvas is locked to the continental US; Alaska and Hawaii are shown
+// in their own inset maps (bottom-left) so they aren't lost off in the ocean.
+const CONUS_BOUNDS = L.latLngBounds([[23.5, -130.5], [50.0, -65.5]]);
+const map = L.map('map-conus', { zoomControl: true, minZoom: 4, maxZoom: 15, maxBounds: CONUS_BOUNDS, maxBoundsViscosity: 1.0 });
+
+// Pane stack, bottom -> top:
+//   base tiles (tilePane 200, no labels) < choropleth fills (overlayPane 400)
+//   < place-name labels (labelsPane 500) < school dots (schoolsPane 625).
+// This keeps roads/water and place names legible ON TOP of the colored heatmaps
+// instead of being tinted/obscured by them.
+map.createPane('labelsPane');
+map.getPane('labelsPane').style.zIndex = 500;
+map.getPane('labelsPane').style.pointerEvents = 'none';
+map.createPane('schoolsPane');
+map.getPane('schoolsPane').style.zIndex = 625;
+
+// Base map WITHOUT labels so the choropleths color the land/water/roads only;
+// the label tiles are re-applied on top (labelsPane) so names stay crisp.
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+  subdomains: 'abcd', maxZoom: 19
+}).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
+  subdomains: 'abcd', maxZoom: 19, pane: 'labelsPane'
+}).addTo(map);
+
+// ---- State boundary layer: click target for every state (Hawaii included).
+// Alaska's raw outline crosses the antimeridian (a stray world-spanning sliver
+// if drawn), so AK is excluded here and represented by its district choropleth
+// instead, which carries the same click-to-profile behavior. ----
+const stateBoundaryLayer = L.geoJSON(stateBoundariesGeo, {
+  filter: function(feature) { return feature.properties.statefp !== '02'; },
+  style: { fillColor: '#ffffff', fillOpacity: 0.01, color: '#6b6a63', weight: 1.8, opacity: 1, lineJoin: 'round' },
+  onEachFeature: function(feature, layer) {
+    const abbr = FIPS_TO_ABBR[feature.properties.statefp];
+    layer.on('click', function(e) { L.DomEvent.stop(e); showStateProfile(abbr); });
+  }
+});
+stateBoundaryLayer.addTo(map);
+
+// ---- AZ ESA zip choropleth (one instance per fiscal year/period) ----
+function makeAzLayer(geo, edges, ramp, fiscalYearLabel, quarterKeys) {
+  return L.geoJSON(geo, {
+    style: function(feature) {
+      return { fillColor: colorFor(feature.properties.total, edges, ramp), weight: 0.6, color: '#ffffff', opacity: 1, fillOpacity: 0.72 };
+    },
+    onEachFeature: function(feature, layer) {
+      const p = feature.properties;
+      const quarterRows = quarterKeys.map(function(qk, i) {
+        return `<td class="q-label">Q${i+1}</td><td>${fmt(p[qk] || 0)}</td>`;
+      });
+      // lay quarters out two per row, same as the original Q1-Q4 layout
+      let rows = '';
+      for (let i = 0; i < quarterRows.length; i += 2) {
+        rows += `<tr>${quarterRows[i]}${quarterRows[i+1] || ''}</tr>`;
+      }
+      const html = `
+        <div class="zip-tooltip">
+          <div class="zt-head">Zip ${p.zip} &mdash; Arizona</div>
+          <div class="zt-total">${fiscalYearLabel} total: <b>${fmt(p.total)}</b> ESA accounts</div>
+          <table>${rows}</table>
+        </div>`;
+      layer.bindTooltip(html, { sticky: true, className: 'zip-tt', direction: 'top' });
+      layer.on('mouseover', function() { layer.setStyle({ weight: 2, color: '#0b0b0b' }); layer.bringToFront(); });
+      layer.on('mouseout', function() { layer.setStyle({ weight: 0.6, color: '#ffffff' }); });
+      layer.on('click', function(e) { L.DomEvent.stop(e); showStateProfile('AZ'); });
+    }
+  });
+}
+
+const azLayer = makeAzLayer(azGeo, azEdges, azRamp, 'FY2024', ['q1', 'q2', 'q3', 'q4']);
+const azLayerFy2026 = makeAzLayer(azGeoFy2026, azFy2026Edges, azFy2026Ramp, 'FY2026 (Q1-Q3)', ['q1', 'q2', 'q3']);
+
+// ---- Generic polygon choropleth builder for FL/TX/NH/WV/NC/AK/RI ----
+function makeChoropleth(geo, edges, ramp, stateLabel, unitLabel, stateAbbr) {
+  return L.geoJSON(geo, {
+    style: function(feature) {
+      return { fillColor: colorFor(feature.properties.students, edges, ramp), weight: 0.7, color: '#ffffff', opacity: 1, fillOpacity: 0.72 };
+    },
+    onEachFeature: function(feature, layer) {
+      const p = feature.properties;
+      const html = `
+        <div class="poly-tooltip">
+          <div class="zt-head">${p.name}</div>
+          <div class="zt-total">${stateLabel}: <b>${fmt(p.students)}</b> ${unitLabel}</div>
+        </div>`;
+      layer.bindTooltip(html, { sticky: true, className: 'poly-tt', direction: 'top' });
+      layer.on('mouseover', function() { layer.setStyle({ weight: 2.2, color: '#0b0b0b' }); layer.bringToFront(); });
+      layer.on('mouseout', function() { layer.setStyle({ weight: 0.7, color: '#ffffff' }); });
+      layer.on('click', function(e) { L.DomEvent.stop(e); showStateProfile(stateAbbr); });
+    }
+  });
+}
+
+const flLayer = makeChoropleth(flGeo, flEdges, flRamp, 'FL FTC (2022-23)', 'scholarship students', 'FL');
+const txLayer = makeChoropleth(txGeo, txEdges, txRamp, 'TX TEFA (2026-27)', 'participating students', 'TX');
+const nhLayer = makeChoropleth(nhGeo, nhEdges, nhRamp, 'NH EFA (SY2025-26)', 'EFA enrollees', 'NH');
+const wvLayer = makeChoropleth(wvGeo, wvEdges, wvRamp, 'WV Hope (2024-25)', 'Hope Scholarship recipients', 'WV');
+const ncLayer = makeChoropleth(ncGeo, ncEdges, ncRamp, 'NC Opportunity Scholarship (2024-25)', 'recipients', 'NC');
+const mdLayer = makeChoropleth(mdGeo, mdEdges, mdRamp, 'MD BOOST scholarships (2025-26)', 'BOOST students', 'MD');
+const akLayer = makeChoropleth(akGeo, akEdges, akRamp, 'AK Correspondence Study (FY2024)', 'students enrolled', 'AK');
+const riLayer = makeChoropleth(riGeo, riEdges, riRamp, 'RI SGO Scholarships (2025, 5 SGOs combined)', 'scholarships', 'RI');
+const inLayer = makeChoropleth(inGeo, inEdges, inRamp, 'IN Choice Scholarship (2024-25, P1+P2)', 'students', 'IN');
+const wiLayer = makeChoropleth(wiGeo, wiEdges, wiRamp, 'WI Choice Programs (2025-26)', 'students', 'WI');
+
+// ---- Exact-locations dots shrink at low zoom so a busy nationwide view stays readable;
+// the clustered layer doesn't need this since it already bubbles nearby points together. ----
+function radiusForZoom(zoom) {
+  if (zoom <= 4) return 1.5;
+  if (zoom <= 6) return 2.5;
+  if (zoom <= 8) return 3.5;
+  if (zoom <= 10) return 4.5;
+  return 5;
+}
+
+// ---- Shared marker builder: one L.circleMarker per school, tooltip + click bound ----
+function buildSchoolMarkers(schools, color, stateAbbr, radius) {
+  return schools.map(function(s) {
+    const marker = L.circleMarker([s.lat, s.lon], { radius: radius, fillColor: color, color: '#ffffff', weight: 1.5, fillOpacity: 0.9, pane: 'schoolsPane' });
+    const approx = ['nominatim_fallback','zcta_centroid_fallback','nominatim_zip_fallback'].includes(s.geo_method);
+    let enrollStr;
+    if (s.enroll === null || s.enroll === undefined) { enrollStr = 'enrollment not reported'; }
+    else if (s.enroll_source === 'state_directory') { enrollStr = fmt(s.enroll) + ' students'; }
+    else { enrollStr = fmt(s.enroll) + ' students (NCES 2023&ndash;24)'; }
+    const html = `
+      <div class="school-tooltip">
+        <div class="zt-head">${s.name}</div>
+        <div class="zt-sub">${s.address}, ${s.city} ${s.zip}</div>
+        <div class="zt-row"><span>${s.relig}</span><span>${s.coed}</span></div>
+        <div class="zt-row"><span>${s.level} &middot; ${s.type}</span></div>
+        <div class="zt-row"><span>${enrollStr}</span></div>
+        ${s.boost ? `<div class="zt-boost">BOOST: ${fmt(s.boost.students)} scholarship students &middot; ${'$' + fmt(s.boost.award)}</div>` : ''}
+        ${approx ? '<div class="zt-approx">Approximate location (city/zip-level)</div>' : ''}
+      </div>`;
+    marker.bindTooltip(html, { sticky: true, className: 'school-tt', direction: 'top' });
+    marker.on('click', function(e) { L.DomEvent.stop(e); showStateProfile(stateAbbr); });
+    return marker;
+  });
+}
+
+// ---- Clustered view: aggregates nearby points into count bubbles when zoomed out ----
+function makeClusterGroup() {
+  return L.markerClusterGroup({
+    maxClusterRadius: 45,
+    clusterPane: 'schoolsPane',
+    iconCreateFunction: function(c) {
+      const count = c.getChildCount();
+      let size = 30;
+      if (count >= 250) size = 50;
+      else if (count >= 50) size = 46;
+      else if (count >= 10) size = 38;
+      return L.divIcon({
+        html: `<div class="cluster-icon" style="background:#eb6834;width:${size}px;height:${size}px;font-size:${size > 40 ? 13 : 11.5}px;">${count}</div>`,
+        className: 'school-cluster-wrapper',
+        iconSize: L.point(size, size)
+      });
+    }
+  });
+}
+
+// ---- All private schools nationwide, combined into ONE cluster group and ONE exact-point group ----
+// (per-state color is preserved on each marker; only the aggregation behavior differs between the two)
+const ALL_SCHOOL_SETS = Object.keys(SCHOOLS_ALL).map(function(abbr) {
+  return [SCHOOLS_ALL[abbr], SCHOOL_COLORS[abbr] || '#888888', abbr];
+});
+
+// Program-participation choropleths, all on the ONE map at real geography.
+// Alaska's district choropleth sits at its true location (far top-left); Hawaii
+// is an outline in the boundary layer. azLayerFy2026 is off by default (same zip
+// geography as FY2024).
+azLayer.addTo(map);
+flLayer.addTo(map);
+txLayer.addTo(map);
+nhLayer.addTo(map);
+wvLayer.addTo(map);
+ncLayer.addTo(map);
+mdLayer.addTo(map);
+akLayer.addTo(map);
+riLayer.addTo(map);
+inLayer.addTo(map);
+wiLayer.addTo(map);
+
+// ---- Per-state private-school layers (all on the one map) ----
+// Each state's schools get their own clustered + exact-point groups. Default
+// mode 'none' = hidden, so the map (Alaska & Hawaii included) boots on the clean
+// choropleth view; each state can be toggled on its own, and the national
+// summary / left control toggle every state at once.
+const SCHOOL = {};
+ALL_SCHOOL_SETS.forEach(function([schools, color, abbr]) {
+  const cluster = makeClusterGroup();
+  const points = L.layerGroup();
+  buildSchoolMarkers(schools, color, abbr, 5).forEach(function(m) { cluster.addLayer(m); });
+  buildSchoolMarkers(schools, color, abbr, 5).forEach(function(m) { points.addLayer(m); });
+  SCHOOL[abbr] = { cluster: cluster, points: points, map: map, mode: 'none' };
+});
+
+function applyStateSchools(abbr) {
+  const s = SCHOOL[abbr];
+  if (!s) return;
+  if (s.map.hasLayer(s.cluster)) s.map.removeLayer(s.cluster);
+  if (s.map.hasLayer(s.points)) s.map.removeLayer(s.points);
+  if (s.mode === 'clustered') s.cluster.addTo(s.map);
+  else if (s.mode === 'exact') { s.points.addTo(s.map); rescaleSchoolPoints(); }
+}
+function setStateSchoolMode(abbr, mode) { if (SCHOOL[abbr]) { SCHOOL[abbr].mode = mode; applyStateSchools(abbr); } }
+function aggregateSchoolMode() {
+  const modes = Object.keys(SCHOOL).map(function(a) { return SCHOOL[a].mode; });
+  if (modes.every(function(m) { return m === 'none'; })) return 'none';
+  if (modes.every(function(m) { return m === 'clustered'; })) return 'clustered';
+  if (modes.every(function(m) { return m === 'exact'; })) return 'exact';
+  return 'mixed';
+}
+
+// Exact-location dots shrink at low zoom so a nationwide view isn't a solid mass.
+function rescaleSchoolPoints() {
+  const r = radiusForZoom(map.getZoom());
+  Object.keys(SCHOOL).forEach(function(a) {
+    const s = SCHOOL[a];
+    if (s.map === map) s.points.eachLayer(function(m) { m.setRadius(r); });
+  });
+}
+map.on('zoomend', rescaleSchoolPoints);
+
+// Left-control school radios drive the GLOBAL (all-states) mode via empty
+// sentinel layers; radioNone is default so the map boots clean.
+const radioClustered = L.layerGroup(), radioExact = L.layerGroup(), radioNone = L.layerGroup();
+radioNone.addTo(map);
+function syncLeftControl(mode) {
+  [radioClustered, radioExact, radioNone].forEach(function(l) { if (map.hasLayer(l)) map.removeLayer(l); });
+  (mode === 'clustered' ? radioClustered : mode === 'exact' ? radioExact : radioNone).addTo(map);
+}
+function setAllSchoolMode(mode, fromControl) {
+  Object.keys(SCHOOL).forEach(function(a) { SCHOOL[a].mode = mode; applyStateSchools(a); });
+  if (!fromControl) syncLeftControl(mode);
+}
+
+map.fitBounds(CONUS_BOUNDS, { padding: [8, 8] });
+rescaleSchoolPoints();
+
+// clicking empty map returns to the national view unless the panel was closed.
+map.on('click', function() { if (!profileClosed) showNationalProfile(); });
+showNationalProfile();
+
+L.control.layers({
+  'Private schools &mdash; clustered (whole map)': radioClustered,
+  'Private schools &mdash; exact locations (whole map)': radioExact,
+  'Private schools &mdash; none (hide all)': radioNone
+}, {
+  'State boundaries': stateBoundaryLayer,
+  'Arizona &mdash; ESA accounts, FY2024 (zip)': azLayer,
+  'Arizona &mdash; ESA accounts, FY2026 Q1-Q3 (zip)': azLayerFy2026,
+  'Florida &mdash; FTC scholarships (district)': flLayer,
+  'North Carolina &mdash; Opportunity Scholarship (county)': ncLayer,
+  'Maryland &mdash; BOOST scholarships (county of residence)': mdLayer,
+  'Rhode Island &mdash; SGO Scholarships (zip)': riLayer,
+  'Indiana &mdash; Choice Scholarship (county)': inLayer,
+  'Wisconsin &mdash; Choice Programs (zip)': wiLayer,
+  'Texas &mdash; TEFA participants (district)': txLayer,
+  'New Hampshire &mdash; EFA enrollees (county)': nhLayer,
+  'West Virginia &mdash; Hope recipients (county)': wvLayer
+}, { collapsed: true, position: 'topleft' }).addTo(map);
+
+// Left-control school radios -> whole-map mode; keep the open panel's toggle in sync.
+map.on('baselayerchange', function(e) {
+  if (e.layer === radioClustered) setAllSchoolMode('clustered', true);
+  else if (e.layer === radioExact) setAllSchoolMode('exact', true);
+  else if (e.layer === radioNone) setAllSchoolMode('none', true);
+  refreshCurrentView();
+});
+
+// ---- Region view switcher (ONE map): fly to a region and lock the view there,
+// while the whole built map (tiles, boundaries, choropleths) stays underneath. ----
+const REGION_VIEW = {
+  conus: { bounds: CONUS_BOUNDS, minZoom: 4 },
+  ak:    { bounds: L.latLngBounds([[52.0, -179.9], [71.6, -129.9]]), minZoom: 4 },
+  hi:    { bounds: L.latLngBounds([[18.7, -160.6], [22.4, -154.6]]), minZoom: 6 }
+};
+let activeRegion = 'conus';
+function viewRegion(region) {
+  const v = REGION_VIEW[region];
+  if (!v) return;
+  activeRegion = region;
+  map.setMaxBounds(null);
+  map.setMinZoom(v.minZoom);
+  map.fitBounds(v.bounds, { padding: [10, 10] });
+  map.setMaxBounds(v.bounds);   // lock the view over this region
+  document.querySelectorAll('#region-switch button').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.region === region);
+  });
+}
+document.querySelectorAll('#region-switch button').forEach(function(b) {
+  b.addEventListener('click', function() { viewRegion(b.dataset.region); });
+});
+viewRegion('conus');
+
+// ---- address search ----
+// Client-side geocode via OpenStreetMap Nominatim (no API key, CORS-enabled,
+// restricted to the US). On a hit: fly to the point, drop a pin, turn on the
+// private-school overlay so nearby access is visible, and open that state's
+// profile so the user sees their own participation/supply picture.
+const STATE_ABBR = {
+  'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA','Colorado':'CO',
+  'Connecticut':'CT','Delaware':'DE','District of Columbia':'DC','Florida':'FL','Georgia':'GA',
+  'Hawaii':'HI','Idaho':'ID','Illinois':'IL','Indiana':'IN','Iowa':'IA','Kansas':'KS','Kentucky':'KY',
+  'Louisiana':'LA','Maine':'ME','Maryland':'MD','Massachusetts':'MA','Michigan':'MI','Minnesota':'MN',
+  'Mississippi':'MS','Missouri':'MO','Montana':'MT','Nebraska':'NE','Nevada':'NV','New Hampshire':'NH',
+  'New Jersey':'NJ','New Mexico':'NM','New York':'NY','North Carolina':'NC','North Dakota':'ND','Ohio':'OH',
+  'Oklahoma':'OK','Oregon':'OR','Pennsylvania':'PA','Rhode Island':'RI','South Carolina':'SC',
+  'South Dakota':'SD','Tennessee':'TN','Texas':'TX','Utah':'UT','Vermont':'VT','Virginia':'VA',
+  'Washington':'WA','West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY'
+};
+
+// Which program choropleth + value field to read for each program state, so we
+// can report the choice-student count for the specific area an address falls in.
+// AZ uses its FY2026 (most current) layer, matching the national-total convention.
+const CHOROPLETH_LOOKUP = {
+  'AZ': { geo: azGeoFy2026, valueKey: 'total', geoUnit: 'ZIP code' },
+  'FL': { geo: flGeo, valueKey: 'students', geoUnit: 'school district' },
+  'TX': { geo: txGeo, valueKey: 'students', geoUnit: 'school district' },
+  'NH': { geo: nhGeo, valueKey: 'students', geoUnit: 'county' },
+  'WV': { geo: wvGeo, valueKey: 'students', geoUnit: 'county' },
+  'NC': { geo: ncGeo, valueKey: 'students', geoUnit: 'county' },
+  'AK': { geo: akGeo, valueKey: 'students', geoUnit: 'school district' },
+  'RI': { geo: riGeo, valueKey: 'students', geoUnit: 'ZIP code' },
+  'IN': { geo: inGeo, valueKey: 'students', geoUnit: 'county' },
+  'WI': { geo: wiGeo, valueKey: 'students', geoUnit: 'ZIP code' }
+};
+
+function milesBetween(lat1, lon1, lat2, lon2) {
+  const R = 3958.8, toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
+  return R * 2 * Math.asin(Math.sqrt(a));
+}
+function pointInRing(lon, lat, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+    if (((yi > lat) !== (yj > lat)) && (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi)) inside = !inside;
+  }
+  return inside;
+}
+function pointInFeature(lon, lat, geom) {
+  if (geom.type === 'Polygon') return pointInRing(lon, lat, geom.coordinates[0]);
+  if (geom.type === 'MultiPolygon') return geom.coordinates.some(poly => pointInRing(lon, lat, poly[0]));
+  return false;
+}
+function findContainingFeature(geo, lon, lat) {
+  for (const f of geo.features) if (pointInFeature(lon, lat, f.geometry)) return f;
+  return null;
+}
+function nearbySchools(lat, lon, maxMi) {
+  const out = [];
+  ALL_SCHOOL_SETS.forEach(function([schools, color, abbr]) {
+    schools.forEach(function(s) {
+      const d = milesBetween(lat, lon, s.lat, s.lon);
+      if (d <= maxMi) out.push({ s: s, abbr: abbr, d: d });
+    });
+  });
+  out.sort((a, b) => a.d - b.d);
+  return out;
+}
+function primaryProgram(profile) {
+  if (!profile) return null;
+  if (profile.programs && profile.programs.length) return profile.programs[profile.programs.length - 1];
+  return profile.program || null;
+}
+
+// The post-search "window": choice-student count for the area + private schools
+// within 50 miles, rendered into the profile panel.
+const NEARBY_RADIUS_MI = 50;
+function showSearchResult(lat, lon, displayName, abbr) {
+  currentAbbr = abbr || null;
+  currentView = 'search';
+  document.documentElement.style.setProperty('--accent', '#eb6834');
+  spTitle.textContent = 'Near this location';
+  const shortName = displayName.split(',').slice(0, 3).join(',').trim();
+
+  const near = nearbySchools(lat, lon, NEARBY_RADIUS_MI);
+  const b10 = near.filter(x => x.d <= 10).length;
+  const b25 = near.filter(x => x.d > 10 && x.d <= 25).length;
+  const b50 = near.filter(x => x.d > 25 && x.d <= 50).length;
+
+  const lk = abbr && CHOROPLETH_LOOKUP[abbr];
+  const prof = abbr && STATE_PROFILES[abbr];
+  const prog = primaryProgram(prof);
+  let choiceHtml = '';
+  if (lk) {
+    const f = findContainingFeature(lk.geo, lon, lat);
+    if (f) {
+      const v = f.properties[lk.valueKey] || 0;
+      const nm = f.properties.name || ('ZIP ' + f.properties.zip);
+      choiceHtml = `<div class="sp-stat">${fmt(v)}</div>
+        <div class="sp-stat-sub">choice students in ${nm} (${lk.geoUnit})</div>`;
+      if (prog) choiceHtml += `<div class="sp-stat-sub">Statewide: ${fmt(prog.total)} ${prog.unit} &mdash; ${prog.label}</div>`;
+    }
+  }
+  if (!choiceHtml) {
+    if (prog) {
+      choiceHtml = `<div class="sp-stat">${fmt(prog.total)}</div>
+        <div class="sp-stat-sub">${prog.unit} statewide &mdash; ${prog.label}</div>`;
+    } else {
+      choiceHtml = `<div class="sp-stat-sub">No school-choice program participation data is loaded` +
+        (prof ? ' for ' + prof.name : '') + ` yet &mdash; only the private-school directory is mapped here.</div>`;
+    }
+  }
+
+  const CAP = 60;
+  const listRows = near.slice(0, CAP).map(x => `
+      <div class="sp-school-row">
+        <span class="sp-school-name">${x.s.name}</span>
+        <span class="sp-school-meta">${x.s.city}, ${x.abbr} &middot; ${x.d.toFixed(1)} mi</span>
+      </div>`).join('');
+  const moreNote = near.length > CAP
+    ? `<div class="sp-note">Showing the nearest ${CAP} of ${fmt(near.length)} within ${NEARBY_RADIUS_MI} miles.</div>` : '';
+
+  let html = `
+    <div class="sp-section">
+      <div class="sp-label">Searched location</div>
+      <div class="sp-stat-sub" style="color:var(--text-secondary);">${shortName}</div>
+    </div>
+    <div class="sp-section">
+      <div class="sp-label">Choice program participation</div>
+      ${choiceHtml}
+    </div>
+    <div class="sp-section">
+      <div class="sp-label">Private schools within ${NEARBY_RADIUS_MI} miles</div>
+      <div class="sp-stat">${fmt(near.length)}</div>
+      <div class="sp-stat-sub">${b10} within 10 mi &middot; ${b25} at 10&ndash;25 mi &middot; ${b50} at 25&ndash;50 mi</div>
+      <div class="sp-schoollist">${listRows || '<div class="sp-note" style="padding:8px 9px;">No private schools in our data within 50 miles.</div>'}</div>
+      ${moreNote}
+    </div>`;
+  if (prof) {
+    html += `<div class="sp-section"><button class="sp-linkbtn" onclick="showStateProfile('${abbr}')">View full ${prof.name} profile &rarr;</button></div>`;
+  }
+  spBody.innerHTML = html;
+  openPanel();
+}
+
+const addrForm = document.getElementById('addr-search');
+const addrInput = document.getElementById('addr-input');
+const addrStatus = document.getElementById('addr-status');
+const addrBtn = addrForm.querySelector('button');
+let searchMarker = null;
+
+function setAddrStatus(msg, isError) {
+  addrStatus.textContent = msg || '';
+  addrStatus.classList.toggle('error', !!isError);
+}
+
+addrForm.addEventListener('submit', function(e) {
+  e.preventDefault();
+  const q = addrInput.value.trim();
+  if (!q) return;
+  addrBtn.disabled = true;
+  setAddrStatus('Searching…', false);
+
+  const url = 'https://nominatim.openstreetmap.org/search?' + new URLSearchParams({
+    q: q, format: 'json', limit: '1', countrycodes: 'us', addressdetails: '1'
+  });
+
+  fetch(url, { headers: { 'Accept': 'application/json' } })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data || !data.length) {
+        setAddrStatus('No match found — try adding a city and state, or a ZIP code.', true);
+        return;
+      }
+      const hit = data[0];
+      const lat = parseFloat(hit.lat), lon = parseFloat(hit.lon);
+      setAddrStatus('', false);
+
+      if (searchMarker) map.removeLayer(searchMarker);
+      searchMarker = L.marker([lat, lon], {
+        icon: L.divIcon({ className: 'search-pin', html: '📍', iconSize: [24, 24], iconAnchor: [12, 22], popupAnchor: [0, -20] })
+      }).addTo(map);
+      searchMarker.bindPopup('<b>Searched location</b><br>' + (hit.display_name || q)).openPopup();
+
+      enableSchoolsLayer();  // so nearby private-school access is visible
+      const wasConus = (activeRegion === 'conus');
+      if (!wasConus) viewRegion('conus');  // search is CONUS-focused; snap back to the full US
+      const flyThere = function() { map.invalidateSize(); map.flyTo([lat, lon], 10, { duration: 1.1 }); };
+      if (wasConus) flyThere(); else setTimeout(flyThere, 160);
+
+      let abbr = null;
+      const iso = hit.address && hit.address['ISO3166-2-lvl4'];
+      if (iso && iso.indexOf('US-') === 0) abbr = iso.slice(3);
+      if (!abbr && hit.address && hit.address.state) abbr = STATE_ABBR[hit.address.state];
+      showSearchResult(lat, lon, hit.display_name || q, abbr);
+    })
+    .catch(function() {
+      setAddrStatus('Search failed — check your connection and try again.', true);
+    })
+    .finally(function() { addrBtn.disabled = false; });
+});
+
+// Under type="module" the top-level scope isn't global, so expose the handlers
+// referenced by inline onclick="" attributes in the profile panel / About page.
+Object.assign(window, { calloutToggleSchools, calloutSetMode, openAbout, closeAbout, showStateProfile });
+</script>
+</body>
+</html>
