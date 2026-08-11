@@ -1015,6 +1015,8 @@ const WIZ_CFG = {
       { key: 'scope', q: 'Where do you want to look for opportunity?', type: 'state', all: 'Compare all program states' },
       { key: 'level', q: 'Which grade level are you thinking about serving?', opts: [['any', 'Any / not sure'], ['Elementary', 'Elementary'], ['Combined', 'K–12 (combined)'], ['Secondary', 'High school']] },
       { key: 'model', q: 'What kind of school model?', opts: [['any', 'Any'], ['faith', 'Faith-based'], ['secular', 'Secular / nonsectarian']] },
+      { key: 'radius', q: 'How far will families travel to reach a new school? (your catchment area)', opts: [['10', 'About 10 miles'], ['25', 'About 25 miles'], ['40', 'About 40 miles']] },
+      { key: 'priority', q: 'Rank the opportunities by what matters most to you.', opts: [['balance', 'Best balance of demand vs. nearby competition'], ['demand', 'Biggest markets (most program students)'], ['whitespace', 'Least competition (fewest nearby schools)']] },
     ],
   },
   parent: {
@@ -1023,11 +1025,12 @@ const WIZ_CFG = {
       { key: 'loc', q: 'Where do you live? Enter an address, city, or ZIP.', type: 'address' },
       { key: 'level', q: 'What grade level is your child?', opts: [['any', 'Any / not sure'], ['Elementary', 'Elementary'], ['Combined', 'K–12 (combined)'], ['Secondary', 'High school']] },
       { key: 'faith', q: 'Any preference on school type?', opts: [['any', 'No preference'], ['Catholic', 'Catholic'], ['Other religious', 'Other religious'], ['Nonsectarian', 'Nonsectarian / secular']] },
+      { key: 'radius', q: 'How far are you willing to travel?', opts: [['10', 'Within 10 miles'], ['25', 'Within 25 miles'], ['50', 'Within 50 miles']] },
     ],
   },
 };
 
-function openWizard(mode) { WIZ.mode = mode; WIZ.step = 0; WIZ.ans = {}; WIZ.loc = null; document.getElementById('wizard').classList.add('open'); renderWizard(); }
+function openWizard(mode) { WIZ.mode = mode; WIZ.step = 0; WIZ.ans = {}; WIZ.loc = null; WIZ.partOnly = false; document.getElementById('wizard').classList.add('open'); renderWizard(); }
 function closeWizard() { document.getElementById('wizard').classList.remove('open'); }
 function wizBack() { if (WIZ.step > 0) { WIZ.step--; renderWizard(); } }
 function wizAnswer(key, val) { WIZ.ans[key] = val; WIZ.step++; renderWizard(); }
@@ -1073,49 +1076,83 @@ function _schoolMatches(s, level, model) {
   if (model === 'secular' && s.relig !== 'Nonsectarian') return false;
   return true;
 }
+function featureCentroid(geom) {
+  let sx = 0, sy = 0, n = 0;
+  const rings = geom.type === 'Polygon' ? [geom.coordinates[0]]
+    : geom.type === 'MultiPolygon' ? geom.coordinates.map(function(p) { return p[0]; }) : [];
+  rings.forEach(function(r) { r.forEach(function(pt) { sx += pt[0]; sy += pt[1]; n++; }); });
+  return n ? [sx / n, sy / n] : [0, 0];
+}
+function _reportedPct(schools, field) {
+  if (!schools.length) return 0;
+  return schools.filter(function(s) { return s[field] && s[field] !== 'Not reported'; }).length / schools.length;
+}
 
 function entrepreneurResults() {
   const a = WIZ.ans, level = a.level, model = a.model;
+  const radius = parseInt(a.radius, 10) || 25, priority = a.priority || 'balance';
   const modelLbl = model === 'faith' ? 'faith-based ' : model === 'secular' ? 'secular ' : '';
   const levelLbl = level && level !== 'any' ? level.toLowerCase() + ' ' : '';
   let html = `<button class="wiz-back" onclick="wizBack()">&larr; Change answers</button>`;
   if (a.scope === 'all') {
-    const rows = Object.keys(STATE_PROFILES).filter(function(x) { const c = STATE_PROFILES[x].access; return c && c.hasProgram && c.participantsPerSeat != null; })
-      .map(function(x) { const c = STATE_PROFILES[x].access; return { x: x, name: STATE_PROFILES[x].name, pps: c.participantsPerSeat, desert: c.pctChildrenInDesert || 0, seatsK: c.seatsPer1000Kids, score: (c.participantsPerSeat * 8) + (c.pctChildrenInDesert || 0) }; })
-      .sort(function(p, q) { return q.score - p.score; }).slice(0, 6);
-    html += `<div class="wiz-res-verdict">States where demand for choice most outstrips ${modelLbl}private-school supply &mdash; the biggest openings for a new ${levelLbl}school.</div>`;
-    html += rows.map(function(r) { return `<div class="wiz-row"><div><div class="r-main">${r.name}</div><div class="r-sub">${r.pps} participants per seat &middot; ${r.desert}% of kids in an access desert &middot; ${r.seatsK} seats / 1,000 kids</div></div><div class="r-val"><button class="wiz-opt" style="padding:5px 10px;" onclick="closeWizard();showStateProfile('${r.x}')">Open</button></div></div>`; }).join('');
-    html += `<div class="wiz-note">&ldquo;Participants per seat&rdquo; above 1 means more program users than local private-school seats &mdash; funding with nowhere brick-and-mortar to spend it. Open a state, then use its <b>Reported program counts by area</b> drawer to see which ZIPs/counties/districts have the most demand.</div>`;
-  } else {
-    const abbr = a.scope, lk = CHOROPLETH_LOOKUP[abbr], prof = STATE_PROFILES[abbr];
-    const schools = (SCHOOLS_ALL[abbr] || []).filter(function(s) { return _schoolMatches(s, level, model); });
-    const cnt = new Map();
-    schools.forEach(function(s) { const f = findContainingFeature(lk.geo, s.lon, s.lat); if (f) cnt.set(f, (cnt.get(f) || 0) + 1); });
-    const areas = lk.geo.features.map(function(f) { return { name: f.properties.name || ('ZIP ' + f.properties.zip), part: +f.properties[lk.valueKey] || 0, sup: cnt.get(f) || 0 }; })
-      .filter(function(z) { return z.part > 0; }).map(function(z) { z.gap = z.part / (z.sup + 1); return z; }).sort(function(p, q) { return q.gap - p.gap; }).slice(0, 10);
-    const c = prof.access || {};
-    html += `<div class="wiz-res-verdict">In ${prof.name}, these ${lk.geoUnit}s have the most program demand with the fewest ${modelLbl}${levelLbl}private schools nearby &mdash; the strongest openings for a new school.</div>`;
-    html += areas.map(function(z) { return `<div class="wiz-row"><div class="r-main">${z.name}</div><div class="r-val">${fmt(z.part)} students &middot; ${z.sup} matching school${z.sup === 1 ? '' : 's'}</div></div>`; }).join('') || '<div class="wiz-note">No areas with participation found for this filter.</div>';
-    html += `<div class="wiz-note">Statewide: ${c.participantsPerSeat != null ? c.participantsPerSeat + ' participants per private-school seat, ' : ''}${c.pctChildrenInDesert != null ? c.pctChildrenInDesert + '% of children in an access desert. ' : ''}&ldquo;Matching schools&rdquo; counts existing ${modelLbl}${levelLbl}private schools located in that ${lk.geoUnit}.</div>`;
+    let rows = Object.keys(STATE_PROFILES).filter(function(x) { const c = STATE_PROFILES[x].access; return c && c.hasProgram && c.participantsPerSeat != null; })
+      .map(function(x) { const c = STATE_PROFILES[x].access, pg = primaryProgram(STATE_PROFILES[x]); return { x: x, name: STATE_PROFILES[x].name, pps: c.participantsPerSeat, desert: c.pctChildrenInDesert || 0, seatsK: c.seatsPer1000Kids, total: pg ? pg.total : 0 }; });
+    if (priority === 'demand') rows.sort(function(p, q) { return q.total - p.total; });
+    else if (priority === 'whitespace') rows.sort(function(p, q) { return (p.seatsK || 0) - (q.seatsK || 0); });
+    else rows.sort(function(p, q) { return ((q.pps * 8) + q.desert) - ((p.pps * 8) + p.desert); });
+    rows = rows.slice(0, 6);
+    const by = priority === 'demand' ? 'total program demand' : priority === 'whitespace' ? 'fewest private-school seats per child' : 'demand outstripping ' + modelLbl + 'private-school supply';
+    html += `<div class="wiz-res-verdict">Program states ranked by ${by} &mdash; the biggest openings for a new ${levelLbl}school.</div>`;
+    html += rows.map(function(r) { return `<div class="wiz-row"><div><div class="r-main">${r.name}</div><div class="r-sub">${fmt(r.total)} program students &middot; ${r.pps} per seat &middot; ${r.desert}% of kids in a desert &middot; ${r.seatsK} seats / 1,000 kids</div></div><div class="r-val"><button class="wiz-opt" style="padding:5px 10px;" onclick="closeWizard();showStateProfile('${r.x}')">Open</button></div></div>`; }).join('');
+    html += `<div class="wiz-note">Pick a single state to see the specific ZIPs, counties, or districts with the most demand and least competition within your catchment radius. &ldquo;Per seat&rdquo; above 1 means more program users than local private-school seats.</div>`;
+    return html;
   }
+  const abbr = a.scope, lk = CHOROPLETH_LOOKUP[abbr], prof = STATE_PROFILES[abbr];
+  const allStateSchools = SCHOOLS_ALL[abbr] || [];
+  const relOk = _reportedPct(allStateSchools, 'relig') >= 0.3;
+  const useModel = (model === 'any' || relOk) ? model : 'any';
+  const schools = allStateSchools.filter(function(s) { return _schoolMatches(s, level, useModel); });
+  const areas = lk.geo.features.map(function(f) {
+    const ctr = featureCentroid(f.geometry);
+    let comp = 0;
+    schools.forEach(function(s) { if (milesBetween(ctr[1], ctr[0], s.lat, s.lon) <= radius) comp++; });
+    return { name: f.properties.name || ('ZIP ' + f.properties.zip), part: +f.properties[lk.valueKey] || 0, comp: comp };
+  }).filter(function(z) { return z.part > 0; });
+  if (priority === 'demand') areas.sort(function(p, q) { return q.part - p.part; });
+  else if (priority === 'whitespace') areas.sort(function(p, q) { return (p.comp - q.comp) || (q.part - p.part); });
+  else areas.sort(function(p, q) { return (q.part / (q.comp + 1)) - (p.part / (p.comp + 1)); });
+  const c = prof.access || {};
+  html += `<div class="wiz-res-verdict">In ${prof.name}, these ${lk.geoUnit}s have the most program demand with the fewest ${modelLbl}${levelLbl}private schools within ${radius} miles &mdash; the strongest openings for a new school.</div>`;
+  if (model !== 'any' && !relOk) html += `<div class="wiz-note" style="margin-top:0;">Note: ${prof.name}'s directory doesn't report religious affiliation, so the ${modelLbl}filter couldn't be applied here &mdash; competition counts all private schools.</div>`;
+  html += areas.slice(0, 10).map(function(z) { return `<div class="wiz-row"><div class="r-main">${z.name}</div><div class="r-val">${fmt(z.part)} students &middot; ${z.comp} school${z.comp === 1 ? '' : 's'} within ${radius} mi</div></div>`; }).join('') || '<div class="wiz-note">No areas with participation found for this filter.</div>';
+  html += `<div class="wiz-note">Statewide: ${c.participantsPerSeat != null ? c.participantsPerSeat + ' participants per private-school seat, ' : ''}${c.pctChildrenInDesert != null ? c.pctChildrenInDesert + '% of children in an access desert. ' : ''}Competition counts existing ${modelLbl}${levelLbl}private schools within ${radius} miles of each ${lk.geoUnit}'s center.</div>`;
   return html;
 }
 
+function wizTogglePart() { WIZ.partOnly = !WIZ.partOnly; renderWizard(); }
+
 function parentResults() {
   const a = WIZ.ans, level = a.level, faith = a.faith, loc = WIZ.loc;
+  const radius = parseInt(a.radius, 10) || 50;
   let html = `<button class="wiz-back" onclick="wizBack()">&larr; Change answers</button>`;
   if (!loc) return html + '<div class="wiz-note">Please go back and enter a location.</div>';
-  const near = nearbySchools(loc.lat, loc.lon, 50).filter(function(x) {
+  let near = nearbySchools(loc.lat, loc.lon, radius).filter(function(x) {
     if (level !== 'any' && x.s.level !== level && x.s.level !== 'Combined') return false;
     if (faith !== 'any' && x.s.relig !== faith) return false;
     return true;
   });
+  const anyPart = near.some(function(x) { return x.s.efa || x.s.boost || x.s.scholarship; });
+  if (WIZ.partOnly) near = near.filter(function(x) { return x.s.efa || x.s.boost || x.s.scholarship; });
   const prof = loc.abbr && STATE_PROFILES[loc.abbr], prog = prof && primaryProgram(prof);
   const faithLbl = faith !== 'any' ? faith.toLowerCase() + ' ' : '', levelLbl = level !== 'any' ? level.toLowerCase() + ' ' : '';
   if (prog) html += `<div class="wiz-res-verdict">${prof.name} offers <b>${prog.label}</b> &mdash; ${fmt(prog.total)} ${prog.unit} statewide. Your family may be eligible for funding toward private-school tuition. <button class="wiz-opt" style="display:inline-block;padding:3px 9px;margin-top:6px;" onclick="closeWizard();showStateProfile('${loc.abbr}')">See the program &rarr;</button></div>`;
   else html += `<div class="wiz-res-verdict">${prof ? prof.name : 'Your state'} has no school-choice program loaded here yet &mdash; the schools below would be private-pay unless a program applies.</div>`;
-  html += `<div class="wiz-progress" style="margin-top:8px;">${fmt(near.length)} matching ${faithLbl}${levelLbl}private school${near.length === 1 ? '' : 's'} within 50 miles of ${loc.name}</div>`;
-  html += near.slice(0, 15).map(function(x) { return `<div class="wiz-row"><div><div class="r-main">${x.s.name}</div><div class="r-sub">${x.s.city}, ${x.abbr} &middot; ${x.s.level}${x.s.relig !== 'Not reported' ? ' &middot; ' + x.s.relig : ''}${x.s.enroll ? ' &middot; ' + fmt(x.s.enroll) + ' students' : ''}</div></div><div class="r-val">${x.d.toFixed(1)} mi</div></div>`; }).join('') || '<div class="wiz-note">No matching private schools within 50 miles &mdash; this area is an access desert for your criteria. Try widening your preferences, or search this address on the map for the nearest options.</div>';
+  if (anyPart) html += `<button class="wiz-opt" style="margin-bottom:11px;${WIZ.partOnly ? 'border-color:var(--accent);' : ''}" onclick="wizTogglePart()">${WIZ.partOnly ? '\u2713 Only schools that accept the scholarship &mdash; show all' : 'Show only schools that accept the scholarship'}</button>`;
+  html += `<div class="wiz-progress" style="margin-top:2px;">${fmt(near.length)} matching ${faithLbl}${levelLbl}private school${near.length === 1 ? '' : 's'} within ${radius} miles of ${loc.name}</div>`;
+  html += near.slice(0, 15).map(function(x) {
+    const badge = (x.s.efa || x.s.boost || x.s.scholarship) ? ' <span style="color:var(--accent-dark);font-weight:600;">&middot; accepts funding</span>' : '';
+    return `<div class="wiz-row"><div><div class="r-main">${x.s.name}${badge}</div><div class="r-sub">${x.s.city}, ${x.abbr} &middot; ${x.s.level}${x.s.relig !== 'Not reported' ? ' &middot; ' + x.s.relig : ''}${x.s.enroll ? ' &middot; ' + fmt(x.s.enroll) + ' students' : ''}</div></div><div class="r-val">${x.d.toFixed(1)} mi</div></div>`;
+  }).join('') || '<div class="wiz-note">No matching private schools within ' + radius + ' miles &mdash; an access desert for your criteria. Try a wider radius or fewer filters.</div>';
   if (near.length > 15) html += `<div class="wiz-note">Showing the 15 nearest of ${fmt(near.length)}. Search this address on the map for the full list and gap analysis.</div>`;
   return html;
 }
@@ -1716,7 +1753,7 @@ addrForm.addEventListener('submit', function(e) {
 
 // Under type="module" the top-level scope isn't global, so expose the handlers
 // referenced by inline onclick="" attributes in the profile panel / About page.
-Object.assign(window, { calloutToggleSchools, calloutSetMode, openAbout, closeAbout, openMethod, closeMethod, showStateProfile, programCountsSelect, openData, closeData, downloadTable, openWizard, closeWizard, wizBack, wizAnswer, wizGeocode });
+Object.assign(window, { calloutToggleSchools, calloutSetMode, openAbout, closeAbout, openMethod, closeMethod, showStateProfile, programCountsSelect, openData, closeData, downloadTable, openWizard, closeWizard, wizBack, wizAnswer, wizGeocode, wizTogglePart });
 </script>
 </body>
 </html>
