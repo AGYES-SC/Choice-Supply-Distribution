@@ -262,6 +262,9 @@
   #state-profile .sp-prog-filter select { font-size: 12.5px; padding: 3px 7px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface-1); color: var(--text-primary); max-width: 100%; }
   #state-profile .sp-prog-head { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
   #state-profile .sp-prog-list { max-height: 340px; overflow-y: auto; padding-right: 4px; }
+  #state-profile .sp-area-row { cursor: pointer; border-radius: 5px; padding-left: 4px; padding-right: 4px; }
+  #state-profile .sp-area-row:hover { background: var(--page-plane); }
+  #state-profile .sp-area-row .v { color: var(--accent-dark); font-weight: 600; }
   #state-profile .sp-metric-big { text-align: center; padding: 4px 0 2px; }
   #state-profile .sp-metric-num { font-size: 34px; font-weight: 800; color: var(--accent-dark); font-variant-numeric: tabular-nums; line-height: 1; }
   #state-profile .sp-metric-lbl { font-size: 11px; color: var(--text-secondary); margin-top: 4px; line-height: 1.3; }
@@ -762,13 +765,70 @@ const PROGRAM_LAYERS = [
 
 function programCountsTable(abbr, idx) {
   const layers = PROGRAM_LAYERS.filter(function(l) { return l.abbr === abbr; });
-  const l = layers[idx] || layers[0];
-  const rows = l.geo.features.map(function(f) { return { n: f.properties[l.nameKey], v: +f.properties[l.key] || 0 }; })
+  const li = layers[idx] ? idx : 0;
+  const l = layers[li];
+  const rows = l.geo.features.map(function(f, fi) { return { n: f.properties[l.nameKey], v: +f.properties[l.key] || 0, fi: fi }; })
     .filter(function(r) { return r.v > 0; }).sort(function(a, b) { return b.v - a.v; });
   const total = rows.reduce(function(s, r) { return s + r.v; }, 0);
-  const head = `<div class="sp-prog-head">${fmt(total)} across ${fmt(rows.length)} ${l.unit}${rows.length === 1 ? '' : 's'} with participants (highest first)</div>`;
-  const list = rows.map(function(r) { return `<div class="sp-kv-row"><span class="k">${r.n}</span><span class="v">${fmt(r.v)}</span></div>`; }).join('');
+  const head = `<div class="sp-prog-head">${fmt(total)} across ${fmt(rows.length)} ${l.unit}${rows.length === 1 ? '' : 's'} with participants &mdash; click any ${l.unit} for its full metrics</div>`;
+  const list = rows.map(function(r) { return `<div class="sp-kv-row sp-area-row" onclick="showAreaDetail('${abbr}',${li},${r.fi})"><span class="k">${r.n}</span><span class="v">${fmt(r.v)} &rsaquo;</span></div>`; }).join('');
   return head + `<div class="sp-prog-list">${list}</div>`;
+}
+
+// Drill-down: all metrics/analytics for a single choropleth area (e.g. one county).
+function showAreaDetail(abbr, layerIdx, fi) {
+  const layers = PROGRAM_LAYERS.filter(function(l) { return l.abbr === abbr; });
+  const l = layers[layerIdx]; if (!l) return;
+  const f = l.geo.features[fi]; if (!f) return;
+  const p = f.properties, name = p[l.nameKey], part = +p[l.key] || 0;
+  const pop = p.pop, acsPriv = p.acsPriv;
+  const prof = STATE_PROFILES[abbr], prog = primaryProgram(prof);
+  const inArea = (SCHOOLS_ALL[abbr] || []).filter(function(s) { return pointInFeature(s.lon, s.lat, f.geometry); });
+  const seats = inArea.reduce(function(t, s) { return t + (s.enroll || 0); }, 0);
+  const lvl = { Elementary: 0, Combined: 0, Secondary: 0 }, rel = { Catholic: 0, 'Other religious': 0, Nonsectarian: 0 };
+  inArea.forEach(function(s) { if (lvl[s.level] != null) lvl[s.level]++; if (rel[s.relig] != null) rel[s.relig]++; });
+  const desert = part > 0 && inArea.length === 0;
+  const pps = seats ? (part / seats).toFixed(2) : null;
+
+  document.documentElement.style.setProperty('--accent', STATE_ACCENT[abbr] || '#898781');
+  spTitle.textContent = name;
+  let html = `<button class="sp-linkbtn" onclick="showStateProfile('${abbr}')">&larr; Back to ${prof.name}</button>
+    <div class="sp-section"><div class="sp-label">${name} &mdash; ${l.unit} in ${prof.name}</div></div>`;
+
+  html += drawer('Program participation', `
+    <div class="sp-stat">${fmt(part)}</div>
+    <div class="sp-stat-sub">${prog ? prog.unit : 'participants'}${prog ? ' &mdash; ' + prog.label : ''}</div>`, true);
+
+  html += drawer('Private-school supply here', `
+    ${desert ? '<div class="gap-verdict gap-bad">Access desert &mdash; program demand, no private school located here</div>' : ''}
+    <div class="sp-kv-row"><span class="k">Private schools in this ${l.unit}</span><span class="v">${fmt(inArea.length)}</span></div>
+    <div class="sp-kv-row"><span class="k">Private-school seats</span><span class="v">${fmt(seats)}</span></div>
+    <div class="sp-kv-row"><span class="k">Participants per seat</span><span class="v">${pps != null ? pps : 'n/a (no seats)'}</span></div>
+    <div class="sp-kv-row"><span class="k">By level</span><span class="v">Elem ${lvl.Elementary} &middot; K&ndash;12 ${lvl.Combined} &middot; High ${lvl.Secondary}</span></div>
+    <div class="sp-kv-row"><span class="k">By type</span><span class="v">Cath ${rel.Catholic} &middot; Other rel. ${rel['Other religious']} &middot; Nonsect. ${rel.Nonsectarian}</span></div>`, true);
+
+  let acsBody;
+  if (pop != null && pop > 0) {
+    acsBody = `
+      <div class="sp-kv-row"><span class="k">School-age children (ACS)</span><span class="v">${fmt(pop)}</span></div>
+      <div class="sp-kv-row"><span class="k">Take-up rate</span><span class="v">${(100 * part / pop).toFixed(1)}%</span></div>
+      <div class="sp-kv-row"><span class="k">Seats per 1,000 children</span><span class="v">${Math.round(1000 * seats / pop)}</span></div>
+      <div class="sp-kv-row"><span class="k">ACS private-school share</span><span class="v">${acsPriv != null ? (100 * acsPriv / pop).toFixed(1) + '%' : 'n/a'}</span></div>`;
+  } else {
+    acsBody = `<div class="sp-note" style="padding:6px 0;">This ${l.unit} couldn't be matched to the ACS, so per-child rates aren't available here.</div>`;
+  }
+  html += drawer('Per-child access (ACS denominators)', acsBody, false);
+
+  const schoolList = inArea.slice().sort(function(a, b) { return (b.enroll || 0) - (a.enroll || 0); }).map(function(s) {
+    return `<div class="sp-school-row"><span class="sp-school-name">${s.name}</span><span class="sp-school-meta">${s.city} &middot; ${s.level}${s.enroll ? ' &middot; ' + fmt(s.enroll) : ''}</span></div>`;
+  }).join('');
+  html += drawer(`Private schools located here (${fmt(inArea.length)})`,
+    schoolList ? `<div class="sp-schoollist">${schoolList}</div>` : '<div class="sp-note" style="padding:6px 0;">None in our directory for this ' + l.unit + '.</div>', false);
+
+  html += `<div class="sp-note">Participation is reported by ${(prog && prog.areaLabel) || l.unit}; the private schools shown are those physically located in this ${l.unit}${(prog && prog.areaLabel && prog.areaLabel.indexOf('residence') >= 0) ? ' &mdash; note these differ, since counts are by where families live, not where schools are' : ''}.</div>`;
+  spBody.innerHTML = html;
+  spBody.scrollTop = 0;
+  openPanel();
 }
 
 function programCountsBody(abbr) {
@@ -1753,7 +1813,7 @@ addrForm.addEventListener('submit', function(e) {
 
 // Under type="module" the top-level scope isn't global, so expose the handlers
 // referenced by inline onclick="" attributes in the profile panel / About page.
-Object.assign(window, { calloutToggleSchools, calloutSetMode, openAbout, closeAbout, openMethod, closeMethod, showStateProfile, programCountsSelect, openData, closeData, downloadTable, openWizard, closeWizard, wizBack, wizAnswer, wizGeocode, wizTogglePart });
+Object.assign(window, { calloutToggleSchools, calloutSetMode, openAbout, closeAbout, openMethod, closeMethod, showStateProfile, showAreaDetail, programCountsSelect, openData, closeData, downloadTable, openWizard, closeWizard, wizBack, wizAnswer, wizGeocode, wizTogglePart });
 </script>
 </body>
 </html>
