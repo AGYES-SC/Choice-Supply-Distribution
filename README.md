@@ -4,17 +4,17 @@ An interactive HTML map of K-12 school-choice program participation (ESAs,
 tax-credit scholarships, vouchers, correspondence-study programs) and
 private-school locations across the United States.
 
-**`index.html` fetches 14 data files (13 geojson + `schools_all.json`) at load
+**`index.html` fetches 16 data files (15 geojson + `schools_all.json`) at load
 time, so it must be served over HTTP — via GitHub Pages, or locally with
 `python3 -m http.server` from the folder holding `index.html` (then open
 http://localhost:8000). Opening the file directly with `file://` will not
-work, because browsers block those fetches. Those 14 files must sit next to
+work, because browsers block those fetches. Those 16 files must sit next to
 `index.html` at the site root; the build copies them there automatically (see
-"Rebuilding"), so deploying is just uploading `index.html` + those 14 files.**
+"Rebuilding"), so deploying is just uploading `index.html` + those 16 files.**
 
 ## What it shows
 
-- **11 states with full program-participation choropleths**, each at that
+- **13 states with full program-participation choropleths**, each at that
   program's own reporting geography (zip code, school district, or county):
 
   | State | Program | Geography | Latest total |
@@ -30,9 +30,11 @@ work, because browsers block those fetches. Those 14 files must sit next to
   | Rhode Island | 5 Scholarship Granting Organizations, combined | zip code | 678 (2025) |
   | Wisconsin | Choice Programs (MPCP/RPCP/WPCP) + SNSP | zip code | 60,927 (2025–26 headcount, crosswalked from a school/system-level enrollment report against the state's private school directory — see Wisconsin's profile for the methodology) |
   | Maryland | BOOST Scholarship (voucher) | county of residence | 2,796 (2025–26; scholarships awarded and accepted, by applicant county of residence). Private-school locations come from the NCES directory (535 schools); the 152 schools that enrolled BOOST students are flagged from the program's own by-school table, 125 of them matched to a directory school. |
+  | Missouri | MOScholars (Empowerment Scholarship Accounts) | home public school district | 11,598 (SY2026-27, by student's home public school district; counts below 5 per district are privacy-suppressed and treated as 0). Private-school locations come from the NCES directory; the 287 schools that received MOScholars funds in SY2025-26 ($38.4M) are flagged, 184 matched to a directory school. |
+  | Arkansas | LEARNS Education Freedom Account (EFA) | county of the school attended | 9,380 mapped of 10,834 EFA students (2024-25). Reported by school (Table 1), then crosswalked to the state private-school directory and aggregated by the private school's county — not student residence. 88 of 126 participating schools located (81 via the directory + 7 geocoded); ~13% of EFA students could not be placed. |
 
-- **15,852 private schools** geocoded across 35 states (the 11 program states
-  above — all now with a private-school directory — plus 24 more with a
+- **15,852 private schools** geocoded across 35 states (the 13 program states
+  above — all now with a private-school directory — plus 22 more with a
   directory but no program-participation data loaded yet), each taggable by
   religious affiliation, level, coed status, and reported enrollment. Seventeen states' schools come from that state's own
   private school directory rather than the NCES Private School Universe
@@ -45,9 +47,13 @@ work, because browsers block those fetches. Those 14 files must sit next to
   `data/profiles/sources.json` documents the specific methodology and any
   data-quality issue found in that state's source file.
 - **A click-through profile panel**: the map opens on a national summary
-  (total participation across all 10 programs, total schools, demographic
+  (total participation across all 13 programs, total schools, demographic
   breakdowns); clicking any state focuses in on that state's own numbers;
-  clicking elsewhere on the map returns to the national view.
+  clicking elsewhere on the map returns to the national view. Each state
+  drawer has an **Access analysis** section (supply-vs-demand + per-child
+  metrics), a **Reported program counts by area** dropdown (the raw
+  choropleth values for that state, filterable when a state has more than one
+  program layer), and a **School characteristics** breakdown.
 - **Layer toggles**: state boundaries; each program's choropleth
   independently; and a single global switch for how private schools are
   drawn — clustered (bubbles that aggregate at low zoom), exact locations
@@ -57,6 +63,18 @@ work, because browsers block those fetches. Those 14 files must sit next to
   report, which year, and any known caveat (a privacy-suppression threshold,
   a reconciliation adjustment, an inconsistency in the source document
   itself) rather than a bare number with no provenance.
+- **Three reference pages** reachable from the header:
+  - **About** — a plain-language explainer of how to read the map and what the
+    headline numbers mean.
+  - **Methodology** — the full, reproducible technical method: every data
+    source, the by-school crosswalk and geocoding-validation rules, and the
+    exact formulas (ACS school-age denominator column set, take-up rate, seats
+    per 1,000, access-desert share, the population-weighted access Gini, and
+    the supply/demand ratios) — written so the results can be reproduced from
+    the raw tables.
+  - **Open data** — every raw table, grouped in a collapsible drawer per
+    state: each program's reported counts by area and the full private-school
+    directory, each **downloadable as CSV** for open-source access.
 
 ## Repo layout
 
@@ -83,7 +101,7 @@ python3 scripts/build_map.py
 reads the choropleth geojson (for class breaks) and the profile JSONs, and
 regenerates `index.html`. The map's large datasets (`schools_all.json`, the
 geojson files) are no longer inlined — the generated page fetches them at load
-time — so `index.html` stays small. The build then **copies those 14 runtime
+time — so `index.html` stays small. The build then **copies those 16 runtime
 files next to `index.html` at the repo root**, producing a flat, upload-ready
 bundle (canonical copies stay under `data/`); it prints the exact deploy file
 list. To serve from a `data/` subfolder instead, set `FETCH_PREFIX` at the top
@@ -129,7 +147,7 @@ re-run it against the same source PDF.
   "scholarships," and "recipients" mean different things depending on the
   program (e.g. Arizona counts *accounts*, which can include siblings on one
   account; Rhode Island counts individual *scholarships*, which can include
-  more than one per student). The national total (765,032, across 11
+  more than one per student). The national total (786,010, across 13
   programs) sums these as-reported — see each state's profile for its specific
   unit. Arizona
   contributes its FY2026 (Q1–Q3, partial year) figure to this total rather
@@ -163,6 +181,20 @@ re-run it against the same source PDF.
   state's reported headcount; see Wisconsin's own source citation in the
   map for the full methodology and its one closed-school/one city-alias
   edge case.
+- **Maryland, Missouri, and Arkansas use the same by-school crosswalk**, and
+  their choropleths are therefore by **school location, not student
+  residence** (except Maryland's BOOST county figure, which is reported by
+  county of residence). Each participating school from the program's own
+  by-school table is matched to the private-school directory (precision-first:
+  exact name, then geographic/city disambiguation, containment, and a
+  distinctive-word rule — never a partial match), and participating schools
+  absent from the directory are geocoded by name+city via Nominatim and kept
+  only if they fall inside the state and within 60 km of the claimed city
+  (rejecting a same-named school in the wrong metro). Coverage is stated per
+  state (e.g. Arkansas maps 88 of 126 schools / 87% of EFA students); schools
+  that can't be placed are counted in the state's aggregate but not shown on
+  the map. The full procedure and formulas are on the map's **Methodology**
+  page.
 - **NCES school geocoding**: addresses were run through the Census Bureau's
   batch geocoder, then OpenStreetMap Nominatim as a fallback. A small
   fraction of schools (varies by state, typically under 10%) are placed at
