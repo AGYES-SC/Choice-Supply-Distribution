@@ -1,0 +1,323 @@
+{
+  "states": [
+    {
+      "abbr": "AK",
+      "name": "Alaska",
+      "schools": 25,
+      "mapPoints": 25,
+      "programExtras": 0,
+      "program": true,
+      "schoolsSource": "NCES directory"
+    },
+    {
+      "abbr": "AL",
+      "name": "Alabama",
+      "schools": 623,
+      "mapPoints": 623,
+      "programExtras": 0,
+      "program": false,
+      "schoolsSource": "state directory"
+    },
+    {
+      "abbr": "AR",
+      "name": "Arkansas",
+      "schools": 100,
+      "mapPoints": 107,
+      "programExtras": 7,
+      "program": true,
+      "schoolsSource": "state directory"
+    },
+    {
+      "abbr": "AZ",
+      "name": "Arizona",
+      "schools": 304,
+      "mapPoints": 304,
+      "programExtras": 0,
+      "program": true,
+      "schoolsSource": "NCES directory"
+    },
+    {
+      "abbr": "CO",
+      "name": "Colorado",
+      "schools": 268,
+      "mapPoints": 268,
+      "programExtras": 0,
+      "program": false,
+      "schoolsSource": "NCES directory"
+    },
+    {
+      "abbr": "FL",
+      "name": "Florida",
+      "schools": 3357,
+      "mapPoints": 3357,
+      "programExtras": 0,
+      "program": true,
+      "schoolsSource": "state directory"
+    },
+    {
+      "abbr": "GA",
+      "name": "Georgia",
+      "schools": 609,
+      "mapPoints": 609,
+      "programExtras": 0,
+      "program": false,
+      "schoolsSource": "NCES directory"
+    },
+    {
+      "abbr": "IA",
+      "name": "Iowa",
+      "schools": 256,
+      "mapPoints": 256,
+      "programExtras": 0,
+      "program": false,
+      "schoolsSource": "state directory"
+    },
+    {
+      "abbr": "ID",
+      "name": "Idaho",
+      "schools": 143,
+      "mapPoints": 143,
+      "programExtras": 0,
+      "program": false,
+      "schoolsSource": "state directory"
+    },
+    {
+      "abbr": "IN",
+      "name": "Indiana",
+      "schools": 417,
+      "mapPoints": 417,
+      "programExtras": 0,
+      "program": true,
+      "schoolsSource": "state directory"
+    },
+    {
+      "abbr": "KS",
+      "name": "Kansas",
+      "schools": 137,
+      "mapPoints": 137,
+      "programExtras": 0,
+      "program": false,
+      "schoolsSource": "state directory"
+    },
+    {
+      "abbr": "KY",
+      "name": "Kentucky",
+      "schools": 192,
+      "mapPoints": 192,
+      "programExtras": 0,
+      "program": false,
+      "schoolsSource": "state directory"
+    },
+    {
+      "abbr": "LA",
+      "name": "Louisiana",
+      "schools": 361,
+      "mapPoints": 361,
+      "programExtras": 0,
+      "program": false,
+      "schoolsSource": "state directory"
+    },
+    {
+      "abbr": "MD",
+      "name": "Maryland",
+      "schools": 535,
+      "mapPoints": 535,
+      "programExtras": 0,
+      "program": true,
+      "schoolsSource": "NCES directory"
+    },
+    {
+      "abbr": "MO",
+      "name": "Missouri",
+      "schools": 496,
+      "mapPoints": 530,
+      "programExtras": 34,
+      "program": true,
+      "schoolsSource": "NCES directory"
+    },
+    {
+      "abbr": "MS",
+      "name": "Mississippi",
+      "schools": 174,
+      "mapPoints": 174,
+      "programExtras": 0,
+      "program": false,
+      "schoolsSource": "NCES directory"
+    },
+    {
+      "abbr": "MT",
+      "name": "Montana",
+      "schools": 106,
+      "mapPoints": 106,
+      "programExtras": 0,
+      "program": false,
+      "schoolsSource": "NCES directory"
+    },
+    {
+      "abbr": "NC",
+      "name": "North Carolina",
+      "schools": 971,
+      "mapPoints": 971,
+      "programExtras": 0,
+      "program": true,
+      "schoolsSource": "state directory"
+    },
+    {
+      "abbr": "ND",
+      "name": "North Dakota",
+      "schools": 59,
+      "mapPoints": 59,
+      "programExtras": 0,
+      "program": false,
+      "schoolsSource": "state directory"
+    },
+    {
+      "abbr": "NE",
+      "name": "Nebraska",
+      "schools": 173,
+      "mapPoints": 173,
+      "programExtras": 0,
+      "program": false,
+      "schoolsSource": "NCES directory"
+    },
+    {
+      "abbr": "NH",
+      "name": "New Hampshire",
+      "schools": 133,
+      "mapPoints": 133,
+      "programExtras": 0,
+      "program": true,
+      "schoolsSource": "state directory"
+    },
+    {
+      "abbr": "NV",
+      "name": "Nevada",
+      "schools": 95,
+      "mapPoints": 95,
+      "programExtras": 0,
+      "program": false,
+      "schoolsSource": "NCES directory"
+    },
+    {
+      "abbr": "OH",
+      "name": "Ohio",
+      "schools": 896,
+      "mapPoints": 896,
+      "programExtras": 0,
+      "program": false,
+      "schoolsSource": "state directory"
+    },
+    {
+      "abbr": "OK",
+      "name": "Oklahoma",
+      "schools": 139,
+      "mapPoints": 139,
+      "programExtras": 0,
+      "program": false,
+      "schoolsSource": "NCES directory"
+    },
+    {
+      "abbr": "PA",
+      "name": "Pennsylvania",
+      "schools": 1542,
+      "mapPoints": 1542,
+      "programExtras": 0,
+      "program": false,
+      "schoolsSource": "NCES directory"
+    },
+    {
+      "abbr": "RI",
+      "name": "Rhode Island",
+      "schools": 81,
+      "mapPoints": 81,
+      "programExtras": 0,
+      "program": true,
+      "schoolsSource": "state directory"
+    },
+    {
+      "abbr": "SC",
+      "name": "South Carolina",
+      "schools": 285,
+      "mapPoints": 285,
+      "programExtras": 0,
+      "program": false,
+      "schoolsSource": "NCES directory"
+    },
+    {
+      "abbr": "SD",
+      "name": "South Dakota",
+      "schools": 67,
+      "mapPoints": 67,
+      "programExtras": 0,
+      "program": false,
+      "schoolsSource": "NCES directory"
+    },
+    {
+      "abbr": "TN",
+      "name": "Tennessee",
+      "schools": 671,
+      "mapPoints": 671,
+      "programExtras": 0,
+      "program": false,
+      "schoolsSource": "state directory"
+    },
+    {
+      "abbr": "TX",
+      "name": "Texas",
+      "schools": 1307,
+      "mapPoints": 1307,
+      "programExtras": 0,
+      "program": true,
+      "schoolsSource": "NCES directory"
+    },
+    {
+      "abbr": "UT",
+      "name": "Utah",
+      "schools": 115,
+      "mapPoints": 115,
+      "programExtras": 0,
+      "program": false,
+      "schoolsSource": "state directory"
+    },
+    {
+      "abbr": "VA",
+      "name": "Virginia",
+      "schools": 642,
+      "mapPoints": 642,
+      "programExtras": 0,
+      "program": false,
+      "schoolsSource": "NCES directory"
+    },
+    {
+      "abbr": "WI",
+      "name": "Wisconsin",
+      "schools": 444,
+      "mapPoints": 444,
+      "programExtras": 0,
+      "program": true,
+      "schoolsSource": "state directory"
+    },
+    {
+      "abbr": "WV",
+      "name": "West Virginia",
+      "schools": 100,
+      "mapPoints": 100,
+      "programExtras": 0,
+      "program": true,
+      "schoolsSource": "NCES directory"
+    },
+    {
+      "abbr": "WY",
+      "name": "Wyoming",
+      "schools": 29,
+      "mapPoints": 29,
+      "programExtras": 0,
+      "program": false,
+      "schoolsSource": "NCES directory"
+    }
+  ],
+  "totalStates": 35,
+  "totalSchools": 15852,
+  "totalMapPoints": 15893,
+  "totalProgramExtras": 41
+}

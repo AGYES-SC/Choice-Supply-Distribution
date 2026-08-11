@@ -19,7 +19,7 @@ work, because browsers block those fetches. Those 16 files must sit next to
 
   | State | Program | Geography | Latest total |
   |---|---|---|---|
-  | Arizona | Empowerment Scholarship Account (ESA) | zip code | 286,855 (FY2024, Q1–Q4) and 294,057 (FY2026, Q1–Q3, partial year) — both shown as separate toggleable layers |
+  | Arizona | Empowerment Scholarship Account (ESA) | zip code | 74,578 (FY2024, year-end Q4) and 102,891 (FY2026, as of Q3, partial year) — both shown as separate toggleable layers. Arizona's quarterly reports restate current enrollment each quarter, so each fiscal year is taken from its **last available quarter**, never summed across quarters (see the data-quality note below). 74,358 and 102,211 respectively are mapped; the rest fall in zip codes with no Census ZCTA polygon. |
   | Florida | Tax Credit Scholarship (FTC) | school district | 100,025 (2022–23) |
   | Texas | Texas Education Freedom Account (TEFA) | school district | 79,753 (2026–27) |
   | New Hampshire | Education Freedom Account (EFA) | county | 10,510 (SY2025–26) |
@@ -45,7 +45,13 @@ work, because browsers block those fetches. Those 16 files must sit next to
   Kentucky, North Dakota, Ohio, Tennessee, and Utah. Each of those states'
   profile names its directory as the source, and
   `data/profiles/sources.json` documents the specific methodology and any
-  data-quality issue found in that state's source file.
+  data-quality issue found in that state's source file. The map draws **15,893
+  points**: those 15,852 directory schools plus 41 *program-only extras* —
+  schools named in a program's own by-school report (Missouri 34, Arkansas 7)
+  but absent from the state directory, geocoded by name + city and shown as
+  approximate dots. Every citable count, demographic breakdown and seat total
+  uses the 15,852 directory basis; the extras are reported alongside, never
+  folded in.
 - **A click-through profile panel**: the map opens on a national summary
   (total participation across all 13 programs, total schools, demographic
   breakdowns); clicking any state focuses in on that state's own numbers;
@@ -54,6 +60,17 @@ work, because browsers block those fetches. Those 16 files must sit next to
   metrics), a **Reported program counts by area** dropdown (the raw
   choropleth values for that state, filterable when a state has more than one
   program layer), and a **School characteristics** breakdown.
+- **Drill into any single area**: clicking a shaded area on the map — a ZIP
+  code, county or school district — zooms to it and opens that one area's
+  own numbers: its reported participation, the private schools physically
+  located inside it (with seats, level and affiliation mix), participants per
+  seat, an **access desert** flag where there's program demand but no private
+  school at all, and ACS per-child rates (take-up, seats per 1,000 children,
+  private-school share) for that area alone. The same drill-down opens from
+  the **Reported program counts by area** list, so either route reaches it.
+  Where a state has more than one program layer (Arizona's two fiscal years),
+  the drill-down is scoped to the layer that was clicked, and a **Back to
+  \<state\>** button restores the previous map view.
 - **Layer toggles**: state boundaries; each program's choropleth
   independently; and a single global switch for how private schools are
   drawn — clustered (bubbles that aggregate at low zoom), exact locations
@@ -143,17 +160,26 @@ re-run it against the same source PDF.
 
 ## Data-quality notes worth knowing before citing a number
 
-- **Program totals are not on a common basis.** "Students," "accounts,"
-  "scholarships," and "recipients" mean different things depending on the
-  program (e.g. Arizona counts *accounts*, which can include siblings on one
-  account; Rhode Island counts individual *scholarships*, which can include
-  more than one per student). The national total (786,010, across 13
-  programs) sums these as-reported — see each state's profile for its specific
-  unit. Arizona
-  contributes its FY2026 (Q1–Q3, partial year) figure to this total rather
+- **Program totals are not on a common basis.** "Students," "scholarships,"
+  and "recipients" mean different things depending on the program (e.g. Rhode
+  Island counts individual *scholarships*, which can include more than one per
+  student). The national total (594,164, across 13 programs) sums these
+  as-reported — see each state's profile for its specific unit. Arizona
+  contributes its FY2026 (as of Q3, partial year) figure to this total rather
   than FY2024, since that's the most current period available; its FY2024
-  full-year figure remains on the map as a separate toggleable layer for
+  year-end figure remains on the map as a separate toggleable layer for
   comparison but isn't double-counted in the national sum.
+- **A fiscal year is one quarterly report, not the sum of its quarters.**
+  Arizona publishes ESA participation quarterly, and each report restates the
+  program's *current* enrollment — a running level, not that quarter's new
+  sign-ups. FY2024 runs 66,457 → 71,520 → 74,996 → 74,578 across Q1–Q4. Each
+  fiscal year is therefore taken from its last available quarter (Q4 for the
+  complete FY2024; Q3 for FY2026, still in progress), and the extracted zip
+  table is checked against the total each report prints for itself. An earlier
+  version of this map added the quarters together, which reported FY2024 as
+  287,551 and FY2026 as 295,918 — roughly a 3.85× overcount, since most
+  students appear in every quarter. Any future state reporting on a quarterly
+  cycle should be checked for the same trap before its quarters are combined.
 - **Several states suppress small counts for privacy.** Indiana asterisks
   any county/period count under 10 (FERPA); this map treats those as 0,
   which undercounts the true total by an unknown amount (documented in
@@ -165,11 +191,11 @@ re-run it against the same source PDF.
   reconcile with the report's own stated total (Alaska: one district's count
   was missing from the summary table but present in a companion table). Each
   is flagged in that state's source citation rather than silently absorbed.
-- **~45 Arizona zip codes, 1 Texas "district"** (Harris County Dept. of
-  Education, a service agency rather than a school district), and 1 small
-  Wisconsin zip code have no matching Census polygon and are excluded from
-  their respective choropleths; the small dollar/count amounts involved are
-  noted in-app.
+- **37 Arizona zip codes (FY2024) / 62 (FY2026), 1 Texas "district"** (Harris
+  County Dept. of Education, a service agency rather than a school district),
+  and 1 small Wisconsin zip code have no matching Census polygon and are
+  excluded from their respective choropleths; the small dollar/count amounts
+  involved (220 and 680 Arizona students respectively) are noted in-app.
 - **Wisconsin's enrollment figure required a school-level crosswalk**, not a
   direct report-to-shapefile join: the state's own enrollment report has no
   addresses, only a school/system name and township, so it was matched

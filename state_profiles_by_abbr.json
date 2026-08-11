@@ -1,0 +1,2007 @@
+{
+  "AL": {
+    "name": "Alabama",
+    "abbr": "AL",
+    "program": null,
+    "schools": {
+      "count": 623,
+      "approx": 117,
+      "religion": {
+        "Not reported": 623
+      },
+      "level": {
+        "Not reported": 218,
+        "Combined": 292,
+        "Secondary": 28,
+        "Elementary": 85
+      },
+      "coed": {
+        "Not reported": 623
+      },
+      "type": {
+        "Not reported": 623
+      },
+      "sourceLabel": "state directory",
+      "sourceKey": "AL_SCHOOLS",
+      "totalEnrollment": 78784,
+      "schoolsWithEnrollment": 226,
+      "seatsStateReported": 0,
+      "seatsNces": 226,
+      "schoolsNoSeats": 397
+    },
+    "access": {
+      "hasProgram": false,
+      "schools": 623,
+      "seats": 78784,
+      "schoolsWithSeats": 226,
+      "seatsCoveragePct": 36,
+      "seatsPerSchool": 349
+    }
+  },
+  "AK": {
+    "name": "Alaska",
+    "abbr": "AK",
+    "program": {
+      "label": "Correspondence Study students (FY2024)",
+      "total": 22959,
+      "unit": "students",
+      "areaCount": 29,
+      "areaLabel": "school district",
+      "topName": "Galena City School District",
+      "topValue": 7486
+    },
+    "schools": {
+      "count": 25,
+      "approx": 2,
+      "religion": {
+        "Other religious": 13,
+        "Nonsectarian": 7,
+        "Catholic": 5
+      },
+      "level": {
+        "Combined": 12,
+        "Elementary": 12,
+        "Secondary": 1
+      },
+      "coed": {
+        "Coed": 25
+      },
+      "type": {
+        "Alternative": 3,
+        "Regular Elementary/Secondary": 16,
+        "Montessori": 4,
+        "Special Program Emphasis": 1,
+        "Early Childhood/Day Care": 1
+      },
+      "totalEnrollment": 2869,
+      "schoolsWithEnrollment": 25,
+      "seatsStateReported": 0,
+      "seatsNces": 25,
+      "schoolsNoSeats": 0
+    },
+    "access": {
+      "hasProgram": true,
+      "schools": 25,
+      "seats": 2869,
+      "schoolsWithSeats": 25,
+      "seatsCoveragePct": 100,
+      "seatsPerSchool": 115,
+      "participation": 22959,
+      "unit": "Correspondence students",
+      "areaUnit": "school district",
+      "areas": 29,
+      "participantsPerSeat": 8.0,
+      "participantsPerSchool": 918,
+      "areasNoSupply": 23,
+      "pctPartNoSupply": 81,
+      "corr": 0.11,
+      "corrStrength": "weak",
+      "spearman": 0.26,
+      "capacitySignal": "demand far exceeds local private-school capacity \u2014 much of the program is used outside brick-and-mortar private schools (home, micro, or online)",
+      "schoolAgePop": 115644,
+      "popCoveragePct": 100,
+      "takeUpRatePct": 19.9,
+      "seatsPer1000Kids": 25,
+      "acsPrivatePct": 15.6,
+      "pctChildrenInDesert": 30,
+      "accessGini": 0.49,
+      "rateCorr": -0.12
+    }
+  },
+  "AZ": {
+    "name": "Arizona",
+    "abbr": "AZ",
+    "schools": {
+      "count": 304,
+      "approx": 11,
+      "religion": {
+        "Other religious": 125,
+        "Nonsectarian": 121,
+        "Catholic": 58
+      },
+      "level": {
+        "Combined": 96,
+        "Elementary": 181,
+        "Secondary": 26,
+        "Not reported": 1
+      },
+      "coed": {
+        "Coed": 287,
+        "All-male": 3,
+        "Not reported": 10,
+        "All-female": 4
+      },
+      "type": {
+        "Regular Elementary/Secondary": 173,
+        "Special Education": 33,
+        "Special Program Emphasis": 15,
+        "Alternative": 9,
+        "Montessori": 31,
+        "Early Childhood/Day Care": 30,
+        "Not reported": 13
+      },
+      "totalEnrollment": 59626,
+      "schoolsWithEnrollment": 300,
+      "seatsStateReported": 0,
+      "seatsNces": 300,
+      "schoolsNoSeats": 4
+    },
+    "programs": [
+      {
+        "label": "ESA students (FY2024, year-end Q4)",
+        "total": 74358,
+        "unit": "students",
+        "areaCount": 372,
+        "areaLabel": "zip code",
+        "topName": "85142",
+        "topValue": 1757,
+        "sourceKey": "AZ",
+        "reportedTotal": 74578,
+        "unmappedAreas": 37
+      },
+      {
+        "label": "ESA students (FY2026, as of Q3, partial year)",
+        "total": 102211,
+        "unit": "students",
+        "areaCount": 376,
+        "areaLabel": "zip code",
+        "topName": "85142",
+        "topValue": 2488,
+        "sourceKey": "AZ_FY2026",
+        "reportedTotal": 102891,
+        "unmappedAreas": 62
+      }
+    ],
+    "access": {
+      "hasProgram": true,
+      "schools": 304,
+      "seats": 59626,
+      "schoolsWithSeats": 300,
+      "seatsCoveragePct": 99,
+      "seatsPerSchool": 199,
+      "participation": 74358,
+      "unit": "ESA students (FY2024, year-end)",
+      "areaUnit": "zip code",
+      "areas": 372,
+      "participantsPerSeat": 1.25,
+      "participantsPerSchool": 245,
+      "areasNoSupply": 227,
+      "pctPartNoSupply": 34,
+      "corr": 0.39,
+      "corrStrength": "weak",
+      "spearman": 0.41,
+      "capacitySignal": "demand exceeds local private-school capacity \u2014 much of the program is used outside brick-and-mortar private schools (home, micro, or online)",
+      "schoolAgePop": 1192451,
+      "popCoveragePct": 100,
+      "takeUpRatePct": 6.2,
+      "seatsPer1000Kids": 50,
+      "acsPrivatePct": 10.9,
+      "pctChildrenInDesert": 35,
+      "accessGini": 0.72,
+      "rateCorr": -0.01
+    }
+  },
+  "AR": {
+    "name": "Arkansas",
+    "abbr": "AR",
+    "program": {
+      "label": "EFA participants (2024-25)",
+      "unit": "students",
+      "areaLabel": "county (school location)",
+      "sourceKey": "AR",
+      "total": 9380,
+      "areaCount": 26,
+      "topName": "Pulaski County",
+      "topValue": 3627
+    },
+    "schools": {
+      "count": 100,
+      "approx": 100,
+      "religion": {
+        "Not reported": 100
+      },
+      "level": {
+        "Combined": 53,
+        "Elementary": 42,
+        "Secondary": 5
+      },
+      "coed": {
+        "Not reported": 100
+      },
+      "type": {
+        "Not reported": 100
+      },
+      "sourceLabel": "state directory",
+      "sourceKey": "AR_SCHOOLS",
+      "totalEnrollment": 20552,
+      "schoolsWithEnrollment": 86,
+      "seatsStateReported": 0,
+      "seatsNces": 0,
+      "schoolsNoSeats": 14
+    },
+    "access": {
+      "hasProgram": true,
+      "schools": 100,
+      "seats": 21626,
+      "schoolsWithSeats": 88,
+      "seatsCoveragePct": 86,
+      "seatsPerSchool": 246,
+      "participation": 9380,
+      "unit": "students",
+      "areaUnit": "county",
+      "areas": 75,
+      "participantsPerSeat": 0.43,
+      "participantsPerSchool": 107,
+      "areasNoSupply": 0,
+      "pctPartNoSupply": 0,
+      "corr": null,
+      "corrStrength": null,
+      "capacitySignal": "about 43% of seats at participating private schools are EFA-funded",
+      "schoolAgePop": 524730,
+      "popCoveragePct": 100,
+      "takeUpRatePct": 1.8,
+      "seatsPer1000Kids": 42,
+      "acsPrivatePct": 10.4,
+      "pctChildrenInDesert": 30,
+      "accessGini": 0.59,
+      "rateCorr": 0.93
+    },
+    "efa": {
+      "participatingSchools": 126,
+      "efaStudents": 10834,
+      "totalEnrollmentAtParticipating": 25110,
+      "avgEfaSharePct": 43,
+      "privateSchoolsInState": 100,
+      "matchedToDirectory": 81,
+      "geocodedExtras": 7,
+      "shownOnMap": 88,
+      "topSchoolName": "Little Rock Christian Academy",
+      "topSchoolEfa": 637,
+      "top5SharePct": 21,
+      "year": "2024-25"
+    }
+  },
+  "CA": {
+    "name": "California",
+    "abbr": "CA",
+    "program": null,
+    "schools": null
+  },
+  "CO": {
+    "name": "Colorado",
+    "abbr": "CO",
+    "program": null,
+    "schools": {
+      "count": 268,
+      "approx": 11,
+      "religion": {
+        "Other religious": 114,
+        "Nonsectarian": 106,
+        "Catholic": 48
+      },
+      "level": {
+        "Elementary": 170,
+        "Combined": 74,
+        "Secondary": 24
+      },
+      "coed": {
+        "Coed": 260,
+        "Not reported": 5,
+        "All-female": 1,
+        "All-male": 2
+      },
+      "type": {
+        "Early Childhood/Day Care": 31,
+        "Alternative": 17,
+        "Montessori": 35,
+        "Regular Elementary/Secondary": 153,
+        "Special Program Emphasis": 19,
+        "Not reported": 2,
+        "Special Education": 11
+      },
+      "totalEnrollment": 45206,
+      "schoolsWithEnrollment": 268,
+      "seatsStateReported": 0,
+      "seatsNces": 268,
+      "schoolsNoSeats": 0
+    },
+    "access": {
+      "hasProgram": false,
+      "schools": 268,
+      "seats": 45206,
+      "schoolsWithSeats": 268,
+      "seatsCoveragePct": 100,
+      "seatsPerSchool": 169
+    }
+  },
+  "CT": {
+    "name": "Connecticut",
+    "abbr": "CT",
+    "program": null,
+    "schools": null
+  },
+  "DE": {
+    "name": "Delaware",
+    "abbr": "DE",
+    "program": null,
+    "schools": null
+  },
+  "FL": {
+    "name": "Florida",
+    "abbr": "FL",
+    "program": {
+      "label": "FTC Scholarship students (2022-23)",
+      "total": 100025,
+      "unit": "students",
+      "areaCount": 67,
+      "areaLabel": "school district",
+      "topName": "Dade County School District",
+      "topValue": 21490
+    },
+    "schools": {
+      "count": 3357,
+      "approx": 380,
+      "religion": {
+        "Other religious": 1479,
+        "Nonsectarian": 1656,
+        "Catholic": 222
+      },
+      "level": {
+        "Combined": 1974,
+        "Not reported": 348,
+        "Elementary": 839,
+        "Secondary": 196
+      },
+      "coed": {
+        "Coed": 3297,
+        "All-female": 16,
+        "Not reported": 20,
+        "All-male": 24
+      },
+      "type": {
+        "Not reported": 3357
+      },
+      "totalEnrollment": 505443,
+      "schoolsWithEnrollment": 3036,
+      "sourceLabel": "state directory",
+      "sourceKey": "FL_SCHOOLS",
+      "seatsStateReported": 3009,
+      "seatsNces": 27,
+      "schoolsNoSeats": 321
+    },
+    "access": {
+      "hasProgram": true,
+      "schools": 3357,
+      "seats": 505443,
+      "schoolsWithSeats": 3036,
+      "seatsCoveragePct": 90,
+      "seatsPerSchool": 166,
+      "participation": 100025,
+      "unit": "FTC scholarship students",
+      "areaUnit": "school district",
+      "areas": 67,
+      "participantsPerSeat": 0.2,
+      "participantsPerSchool": 30,
+      "areasNoSupply": 1,
+      "pctPartNoSupply": 0,
+      "corr": 0.97,
+      "corrStrength": "strong",
+      "spearman": 0.94,
+      "capacitySignal": "ample private-school capacity relative to program use",
+      "schoolAgePop": 3248481,
+      "popCoveragePct": 100,
+      "takeUpRatePct": 3.1,
+      "seatsPer1000Kids": 155,
+      "acsPrivatePct": 15.9,
+      "pctChildrenInDesert": 0,
+      "accessGini": 0.19,
+      "rateCorr": 0.17
+    }
+  },
+  "GA": {
+    "name": "Georgia",
+    "abbr": "GA",
+    "program": null,
+    "schools": {
+      "count": 609,
+      "approx": 31,
+      "religion": {
+        "Nonsectarian": 206,
+        "Other religious": 368,
+        "Catholic": 35
+      },
+      "level": {
+        "Elementary": 265,
+        "Combined": 303,
+        "Secondary": 37,
+        "Not reported": 4
+      },
+      "coed": {
+        "Coed": 584,
+        "All-male": 10,
+        "All-female": 4,
+        "Not reported": 11
+      },
+      "type": {
+        "Montessori": 49,
+        "Not reported": 27,
+        "Regular Elementary/Secondary": 384,
+        "Special Education": 38,
+        "Alternative": 26,
+        "Special Program Emphasis": 30,
+        "Early Childhood/Day Care": 54,
+        "Vocational/Technical": 1
+      },
+      "totalEnrollment": 134313,
+      "schoolsWithEnrollment": 601,
+      "seatsStateReported": 0,
+      "seatsNces": 601,
+      "schoolsNoSeats": 8
+    },
+    "access": {
+      "hasProgram": false,
+      "schools": 609,
+      "seats": 134313,
+      "schoolsWithSeats": 601,
+      "seatsCoveragePct": 99,
+      "seatsPerSchool": 223
+    }
+  },
+  "HI": {
+    "name": "Hawaii",
+    "abbr": "HI",
+    "program": null,
+    "schools": null
+  },
+  "ID": {
+    "name": "Idaho",
+    "abbr": "ID",
+    "program": null,
+    "schools": {
+      "count": 143,
+      "approx": 10,
+      "religion": {
+        "Not reported": 143
+      },
+      "level": {
+        "Elementary": 23,
+        "Combined": 104,
+        "Secondary": 15,
+        "Not reported": 1
+      },
+      "coed": {
+        "Not reported": 143
+      },
+      "type": {
+        "Not reported": 143
+      },
+      "sourceLabel": "state directory",
+      "sourceKey": "ID_SCHOOLS",
+      "totalEnrollment": 14971,
+      "schoolsWithEnrollment": 78,
+      "seatsStateReported": 0,
+      "seatsNces": 78,
+      "schoolsNoSeats": 65
+    },
+    "access": {
+      "hasProgram": false,
+      "schools": 143,
+      "seats": 14971,
+      "schoolsWithSeats": 78,
+      "seatsCoveragePct": 55,
+      "seatsPerSchool": 192
+    }
+  },
+  "IL": {
+    "name": "Illinois",
+    "abbr": "IL",
+    "program": null,
+    "schools": null
+  },
+  "IN": {
+    "name": "Indiana",
+    "abbr": "IN",
+    "program": {
+      "label": "Choice Scholarship students (2024-25, Period 1 + 2 combined)",
+      "total": 75930,
+      "unit": "students",
+      "areaCount": 92,
+      "areaLabel": "county",
+      "topName": "Marion County",
+      "topValue": 18076
+    },
+    "schools": {
+      "count": 417,
+      "approx": 26,
+      "religion": {
+        "Not reported": 417
+      },
+      "level": {
+        "Combined": 317,
+        "Secondary": 45,
+        "Elementary": 55
+      },
+      "coed": {
+        "Not reported": 417
+      },
+      "type": {
+        "In-Person": 398,
+        "Hybrid": 12,
+        "Virtual": 7
+      },
+      "sourceLabel": "state directory",
+      "sourceKey": "IN_SCHOOLS",
+      "totalEnrollment": 87876,
+      "schoolsWithEnrollment": 309,
+      "seatsStateReported": 0,
+      "seatsNces": 309,
+      "schoolsNoSeats": 108
+    },
+    "access": {
+      "hasProgram": true,
+      "schools": 417,
+      "seats": 87876,
+      "schoolsWithSeats": 309,
+      "seatsCoveragePct": 74,
+      "seatsPerSchool": 284,
+      "participation": 75930,
+      "unit": "Choice students",
+      "areaUnit": "county",
+      "areas": 92,
+      "participantsPerSeat": 0.86,
+      "participantsPerSchool": 182,
+      "areasNoSupply": 0,
+      "pctPartNoSupply": 0,
+      "corr": 0.99,
+      "corrStrength": "strong",
+      "spearman": 0.93,
+      "capacitySignal": "program use is roughly balanced with private-school capacity",
+      "schoolAgePop": 1185186,
+      "popCoveragePct": 100,
+      "takeUpRatePct": 6.4,
+      "seatsPer1000Kids": 74,
+      "acsPrivatePct": 14.6,
+      "pctChildrenInDesert": 11,
+      "accessGini": 0.39,
+      "rateCorr": 0.86
+    }
+  },
+  "IA": {
+    "name": "Iowa",
+    "abbr": "IA",
+    "program": null,
+    "schools": {
+      "count": 256,
+      "approx": 20,
+      "religion": {
+        "Not reported": 256
+      },
+      "level": {
+        "Elementary": 171,
+        "Combined": 43,
+        "Secondary": 42
+      },
+      "coed": {
+        "Not reported": 256
+      },
+      "type": {
+        "Not reported": 256
+      },
+      "sourceLabel": "state directory",
+      "sourceKey": "IA_SCHOOLS",
+      "totalEnrollment": 36102,
+      "schoolsWithEnrollment": 150,
+      "seatsStateReported": 0,
+      "seatsNces": 150,
+      "schoolsNoSeats": 106
+    },
+    "access": {
+      "hasProgram": false,
+      "schools": 256,
+      "seats": 36102,
+      "schoolsWithSeats": 150,
+      "seatsCoveragePct": 59,
+      "seatsPerSchool": 241
+    }
+  },
+  "KS": {
+    "name": "Kansas",
+    "abbr": "KS",
+    "program": null,
+    "schools": {
+      "count": 137,
+      "approx": 14,
+      "religion": {
+        "Not reported": 137
+      },
+      "level": {
+        "Elementary": 65,
+        "Secondary": 21,
+        "Not reported": 51
+      },
+      "coed": {
+        "Not reported": 137
+      },
+      "type": {
+        "Not reported": 137
+      },
+      "totalEnrollment": 28636,
+      "schoolsWithEnrollment": 131,
+      "sourceLabel": "state directory",
+      "sourceKey": "KS_SCHOOLS",
+      "seatsStateReported": 111,
+      "seatsNces": 20,
+      "schoolsNoSeats": 6
+    },
+    "access": {
+      "hasProgram": false,
+      "schools": 137,
+      "seats": 28636,
+      "schoolsWithSeats": 131,
+      "seatsCoveragePct": 96,
+      "seatsPerSchool": 219
+    }
+  },
+  "KY": {
+    "name": "Kentucky",
+    "abbr": "KY",
+    "program": null,
+    "schools": {
+      "count": 192,
+      "approx": 33,
+      "religion": {
+        "Not reported": 192
+      },
+      "level": {
+        "Combined": 147,
+        "Secondary": 29,
+        "Elementary": 16
+      },
+      "coed": {
+        "Not reported": 192
+      },
+      "type": {
+        "Not reported": 192
+      },
+      "sourceLabel": "state directory",
+      "sourceKey": "KY_SCHOOLS",
+      "totalEnrollment": 47229,
+      "schoolsWithEnrollment": 150,
+      "seatsStateReported": 0,
+      "seatsNces": 150,
+      "schoolsNoSeats": 42
+    },
+    "access": {
+      "hasProgram": false,
+      "schools": 192,
+      "seats": 47229,
+      "schoolsWithSeats": 150,
+      "seatsCoveragePct": 78,
+      "seatsPerSchool": 315
+    }
+  },
+  "LA": {
+    "name": "Louisiana",
+    "abbr": "LA",
+    "program": null,
+    "schools": {
+      "count": 361,
+      "approx": 7,
+      "religion": {
+        "Not reported": 361
+      },
+      "level": {
+        "Secondary": 45,
+        "Elementary": 53,
+        "Combined": 263
+      },
+      "coed": {
+        "Not reported": 361
+      },
+      "type": {
+        "Not reported": 361
+      },
+      "sourceLabel": "state directory",
+      "sourceKey": "LA_SCHOOLS",
+      "totalEnrollment": 84836,
+      "schoolsWithEnrollment": 237,
+      "seatsStateReported": 0,
+      "seatsNces": 237,
+      "schoolsNoSeats": 124
+    },
+    "access": {
+      "hasProgram": false,
+      "schools": 361,
+      "seats": 84836,
+      "schoolsWithSeats": 237,
+      "seatsCoveragePct": 66,
+      "seatsPerSchool": 358
+    }
+  },
+  "ME": {
+    "name": "Maine",
+    "abbr": "ME",
+    "program": null,
+    "schools": null
+  },
+  "MD": {
+    "name": "Maryland",
+    "abbr": "MD",
+    "program": {
+      "label": "BOOST scholarship students (2025-26)",
+      "total": 2796,
+      "unit": "students",
+      "areaCount": 23,
+      "areaLabel": "county of residence",
+      "topName": "Baltimore City",
+      "topValue": 944,
+      "sourceKey": "MD"
+    },
+    "schools": {
+      "count": 535,
+      "approx": 8,
+      "religion": {
+        "Catholic": 121,
+        "Nonsectarian": 197,
+        "Other religious": 217
+      },
+      "level": {
+        "Secondary": 56,
+        "Elementary": 323,
+        "Combined": 154,
+        "Not reported": 2
+      },
+      "coed": {
+        "All-female": 17,
+        "Coed": 489,
+        "All-male": 23,
+        "Not reported": 6
+      },
+      "type": {
+        "Regular Elementary/Secondary": 338,
+        "Early Childhood/Day Care": 57,
+        "Montessori": 56,
+        "Alternative": 9,
+        "Special Program Emphasis": 16,
+        "Special Education": 46,
+        "Not reported": 13
+      },
+      "sourceLabel": "NCES directory",
+      "sourceKey": "MD_SCHOOLS",
+      "totalEnrollment": 115352,
+      "schoolsWithEnrollment": 530,
+      "seatsStateReported": 0,
+      "seatsNces": 530,
+      "schoolsNoSeats": 5
+    },
+    "access": {
+      "hasProgram": true,
+      "schools": 535,
+      "seats": 115352,
+      "schoolsWithSeats": 530,
+      "seatsCoveragePct": 99,
+      "seatsPerSchool": 218,
+      "participation": 2796,
+      "unit": "BOOST students",
+      "areaUnit": "county",
+      "areas": 24,
+      "participantsPerSeat": 0.02,
+      "participantsPerSchool": 5,
+      "areasNoSupply": 1,
+      "pctPartNoSupply": 0,
+      "corr": 0.73,
+      "corrStrength": "strong",
+      "spearman": 0.88,
+      "capacitySignal": "program use is far below private-school capacity",
+      "schoolAgePop": 1020122,
+      "popCoveragePct": 100,
+      "takeUpRatePct": 0.3,
+      "seatsPer1000Kids": 113,
+      "acsPrivatePct": 15.0,
+      "pctChildrenInDesert": 0,
+      "accessGini": 0.21,
+      "rateCorr": 0.31
+    },
+    "boost": {
+      "participatingSchools": 152,
+      "participatingStudents": 2796,
+      "totalAward": 9505154,
+      "avgAwardPerStudent": 3400,
+      "privateSchoolsInState": 535,
+      "pctPrivateSchoolsParticipating": 28,
+      "matchedToDirectory": 125,
+      "topSchoolName": "Bais Yaakov School for Girls",
+      "topSchoolStudents": 307,
+      "top5SharePct": 31,
+      "countiesWithParticipation": 19
+    }
+  },
+  "MA": {
+    "name": "Massachusetts",
+    "abbr": "MA",
+    "program": null,
+    "schools": null
+  },
+  "MI": {
+    "name": "Michigan",
+    "abbr": "MI",
+    "program": null,
+    "schools": null
+  },
+  "MN": {
+    "name": "Minnesota",
+    "abbr": "MN",
+    "program": null,
+    "schools": null
+  },
+  "MS": {
+    "name": "Mississippi",
+    "abbr": "MS",
+    "program": null,
+    "schools": {
+      "count": 174,
+      "approx": 11,
+      "religion": {
+        "Other religious": 125,
+        "Nonsectarian": 26,
+        "Catholic": 23
+      },
+      "level": {
+        "Secondary": 16,
+        "Combined": 94,
+        "Elementary": 64
+      },
+      "coed": {
+        "Coed": 169,
+        "All-male": 3,
+        "Not reported": 2
+      },
+      "type": {
+        "Regular Elementary/Secondary": 132,
+        "Montessori": 4,
+        "Early Childhood/Day Care": 16,
+        "Special Education": 7,
+        "Not reported": 8,
+        "Special Program Emphasis": 3,
+        "Alternative": 4
+      },
+      "totalEnrollment": 40544,
+      "schoolsWithEnrollment": 173,
+      "seatsStateReported": 0,
+      "seatsNces": 173,
+      "schoolsNoSeats": 1
+    },
+    "access": {
+      "hasProgram": false,
+      "schools": 174,
+      "seats": 40544,
+      "schoolsWithSeats": 173,
+      "seatsCoveragePct": 99,
+      "seatsPerSchool": 234
+    }
+  },
+  "MO": {
+    "name": "Missouri",
+    "abbr": "MO",
+    "program": {
+      "label": "MOScholars ESA students (SY2026-27)",
+      "unit": "students",
+      "areaLabel": "school district",
+      "sourceKey": "MO",
+      "total": 11598,
+      "areaCount": 171,
+      "topName": "St. Louis City School District",
+      "topValue": 664
+    },
+    "schools": {
+      "count": 496,
+      "approx": 30,
+      "religion": {
+        "Other religious": 215,
+        "Nonsectarian": 89,
+        "Catholic": 192
+      },
+      "level": {
+        "Elementary": 323,
+        "Combined": 121,
+        "Secondary": 50,
+        "Not reported": 2
+      },
+      "coed": {
+        "Coed": 468,
+        "All-male": 14,
+        "All-female": 9,
+        "Not reported": 5
+      },
+      "type": {
+        "Regular Elementary/Secondary": 398,
+        "Montessori": 26,
+        "Special Education": 21,
+        "Not reported": 12,
+        "Alternative": 15,
+        "Early Childhood/Day Care": 7,
+        "Special Program Emphasis": 17
+      },
+      "sourceLabel": "NCES directory",
+      "sourceKey": "SCHOOLS",
+      "totalEnrollment": 94610,
+      "schoolsWithEnrollment": 491,
+      "seatsStateReported": 0,
+      "seatsNces": 491,
+      "schoolsNoSeats": 5
+    },
+    "access": {
+      "hasProgram": true,
+      "schools": 496,
+      "seats": 94610,
+      "schoolsWithSeats": 491,
+      "seatsCoveragePct": 99,
+      "seatsPerSchool": 193,
+      "participation": 11598,
+      "unit": "students",
+      "areaUnit": "school district",
+      "areas": 445,
+      "participantsPerSeat": 0.12,
+      "participantsPerSchool": 23,
+      "areasNoSupply": 61,
+      "pctPartNoSupply": 12,
+      "corr": 0.75,
+      "corrStrength": "strong",
+      "capacitySignal": "program use is far below private-school capacity",
+      "schoolAgePop": 1009345,
+      "popCoveragePct": 100,
+      "takeUpRatePct": 1.1,
+      "seatsPer1000Kids": 93,
+      "acsPrivatePct": 14.9,
+      "pctChildrenInDesert": 28,
+      "accessGini": 0.59,
+      "rateCorr": 0.39
+    },
+    "scholarship": {
+      "schoolsFunded": 287,
+      "totalFunds": 38353503,
+      "avgFundsPerSchool": 133636,
+      "privateSchoolsInState": 496,
+      "pctPrivateSchoolsFunded": 58,
+      "matchedToDirectory": 184,
+      "geocodedExtras": 34,
+      "shownOnMap": 218,
+      "topSchoolName": "Torah Prep School",
+      "topSchoolFunds": 1798704,
+      "top5SharePct": 13,
+      "year": "SY2025-26"
+    }
+  },
+  "MT": {
+    "name": "Montana",
+    "abbr": "MT",
+    "program": null,
+    "schools": {
+      "count": 106,
+      "approx": 9,
+      "religion": {
+        "Nonsectarian": 36,
+        "Other religious": 49,
+        "Catholic": 21
+      },
+      "level": {
+        "Combined": 33,
+        "Elementary": 59,
+        "Not reported": 1,
+        "Secondary": 13
+      },
+      "coed": {
+        "Coed": 103,
+        "All-male": 1,
+        "All-female": 2
+      },
+      "type": {
+        "Regular Elementary/Secondary": 69,
+        "Special Program Emphasis": 10,
+        "Montessori": 13,
+        "Alternative": 9,
+        "Special Education": 3,
+        "Early Childhood/Day Care": 2
+      },
+      "totalEnrollment": 11087,
+      "schoolsWithEnrollment": 105,
+      "seatsStateReported": 0,
+      "seatsNces": 105,
+      "schoolsNoSeats": 1
+    },
+    "access": {
+      "hasProgram": false,
+      "schools": 106,
+      "seats": 11087,
+      "schoolsWithSeats": 105,
+      "seatsCoveragePct": 99,
+      "seatsPerSchool": 106
+    }
+  },
+  "NE": {
+    "name": "Nebraska",
+    "abbr": "NE",
+    "program": null,
+    "schools": {
+      "count": 173,
+      "approx": 6,
+      "religion": {
+        "Catholic": 97,
+        "Other religious": 64,
+        "Nonsectarian": 12
+      },
+      "level": {
+        "Elementary": 119,
+        "Combined": 34,
+        "Secondary": 19,
+        "Not reported": 1
+      },
+      "coed": {
+        "Coed": 165,
+        "All-male": 3,
+        "All-female": 3,
+        "Not reported": 2
+      },
+      "type": {
+        "Regular Elementary/Secondary": 159,
+        "Special Education": 4,
+        "Montessori": 5,
+        "Early Childhood/Day Care": 2,
+        "Not reported": 3
+      },
+      "totalEnrollment": 34440,
+      "schoolsWithEnrollment": 172,
+      "seatsStateReported": 0,
+      "seatsNces": 172,
+      "schoolsNoSeats": 1
+    },
+    "access": {
+      "hasProgram": false,
+      "schools": 173,
+      "seats": 34440,
+      "schoolsWithSeats": 172,
+      "seatsCoveragePct": 99,
+      "seatsPerSchool": 200
+    }
+  },
+  "NV": {
+    "name": "Nevada",
+    "abbr": "NV",
+    "program": null,
+    "schools": {
+      "count": 95,
+      "approx": 0,
+      "religion": {
+        "Nonsectarian": 37,
+        "Other religious": 48,
+        "Catholic": 10
+      },
+      "level": {
+        "Elementary": 63,
+        "Combined": 25,
+        "Secondary": 7
+      },
+      "coed": {
+        "Coed": 91,
+        "Not reported": 2,
+        "All-female": 1,
+        "All-male": 1
+      },
+      "type": {
+        "Early Childhood/Day Care": 7,
+        "Not reported": 5,
+        "Special Program Emphasis": 10,
+        "Regular Elementary/Secondary": 61,
+        "Montessori": 7,
+        "Special Education": 2,
+        "Vocational/Technical": 1,
+        "Alternative": 2
+      },
+      "totalEnrollment": 21689,
+      "schoolsWithEnrollment": 95,
+      "seatsStateReported": 0,
+      "seatsNces": 95,
+      "schoolsNoSeats": 0
+    },
+    "access": {
+      "hasProgram": false,
+      "schools": 95,
+      "seats": 21689,
+      "schoolsWithSeats": 95,
+      "seatsCoveragePct": 100,
+      "seatsPerSchool": 228
+    }
+  },
+  "NH": {
+    "name": "New Hampshire",
+    "abbr": "NH",
+    "program": {
+      "label": "EFA enrollees (SY2025-26)",
+      "total": 10510,
+      "unit": "enrollees",
+      "areaCount": 10,
+      "areaLabel": "county",
+      "topName": "Hillsborough County",
+      "topValue": 3812
+    },
+    "schools": {
+      "count": 133,
+      "approx": 133,
+      "religion": {
+        "Not reported": 133
+      },
+      "level": {
+        "Not reported": 133
+      },
+      "coed": {
+        "Not reported": 133
+      },
+      "type": {
+        "Not reported": 133
+      },
+      "sourceLabel": "state directory",
+      "sourceKey": "NH_SCHOOLS",
+      "totalEnrollment": 10987,
+      "schoolsWithEnrollment": 80,
+      "seatsStateReported": 0,
+      "seatsNces": 80,
+      "schoolsNoSeats": 53
+    },
+    "access": {
+      "hasProgram": true,
+      "schools": 133,
+      "seats": 10987,
+      "schoolsWithSeats": 80,
+      "seatsCoveragePct": 60,
+      "seatsPerSchool": 137,
+      "participation": 10510,
+      "unit": "EFA enrollees",
+      "areaUnit": "county",
+      "areas": 10,
+      "participantsPerSeat": 0.96,
+      "participantsPerSchool": 79,
+      "areasNoSupply": 0,
+      "pctPartNoSupply": 0,
+      "corr": 0.94,
+      "corrStrength": "strong",
+      "spearman": 0.98,
+      "capacitySignal": "program use is roughly balanced with private-school capacity",
+      "schoolAgePop": 191701,
+      "popCoveragePct": 100,
+      "takeUpRatePct": 5.5,
+      "seatsPer1000Kids": 57,
+      "acsPrivatePct": 13.0,
+      "pctChildrenInDesert": 0,
+      "accessGini": 0.19,
+      "rateCorr": 0.5
+    }
+  },
+  "NJ": {
+    "name": "New Jersey",
+    "abbr": "NJ",
+    "program": null,
+    "schools": null
+  },
+  "NM": {
+    "name": "New Mexico",
+    "abbr": "NM",
+    "program": null,
+    "schools": null
+  },
+  "NY": {
+    "name": "New York",
+    "abbr": "NY",
+    "program": null,
+    "schools": null
+  },
+  "NC": {
+    "name": "North Carolina",
+    "abbr": "NC",
+    "program": {
+      "label": "Opportunity Scholarship recipients (2024-25)",
+      "total": 106867,
+      "unit": "recipients",
+      "areaCount": 100,
+      "areaLabel": "county",
+      "topName": "Wake County",
+      "topValue": 14521
+    },
+    "schools": {
+      "count": 971,
+      "approx": 107,
+      "religion": {
+        "Not reported": 971
+      },
+      "level": {
+        "Not reported": 971
+      },
+      "coed": {
+        "Not reported": 971
+      },
+      "type": {
+        "Not reported": 971
+      },
+      "sourceLabel": "state directory",
+      "sourceKey": "NC_SCHOOLS",
+      "totalEnrollment": 118165,
+      "schoolsWithEnrollment": 512,
+      "seatsStateReported": 0,
+      "seatsNces": 512,
+      "schoolsNoSeats": 459
+    },
+    "access": {
+      "hasProgram": true,
+      "schools": 971,
+      "seats": 118165,
+      "schoolsWithSeats": 512,
+      "seatsCoveragePct": 53,
+      "seatsPerSchool": 231,
+      "participation": 106867,
+      "unit": "Opportunity recipients",
+      "areaUnit": "county",
+      "areas": 100,
+      "participantsPerSeat": 0.9,
+      "participantsPerSchool": 110,
+      "areasNoSupply": 12,
+      "pctPartNoSupply": 1,
+      "corr": 0.97,
+      "corrStrength": "strong",
+      "spearman": 0.89,
+      "capacitySignal": "program use is roughly balanced with private-school capacity",
+      "schoolAgePop": 1731937,
+      "popCoveragePct": 100,
+      "takeUpRatePct": 6.2,
+      "seatsPer1000Kids": 68,
+      "acsPrivatePct": 13.6,
+      "pctChildrenInDesert": 3,
+      "accessGini": 0.3,
+      "rateCorr": 0.58
+    }
+  },
+  "ND": {
+    "name": "North Dakota",
+    "abbr": "ND",
+    "program": null,
+    "schools": {
+      "count": 59,
+      "approx": 8,
+      "religion": {
+        "Not reported": 59
+      },
+      "level": {
+        "Elementary": 27,
+        "Combined": 28,
+        "Secondary": 4
+      },
+      "coed": {
+        "Not reported": 59
+      },
+      "type": {
+        "Not reported": 59
+      },
+      "sourceLabel": "state directory",
+      "sourceKey": "ND_SCHOOLS",
+      "totalEnrollment": 6005,
+      "schoolsWithEnrollment": 35,
+      "seatsStateReported": 0,
+      "seatsNces": 35,
+      "schoolsNoSeats": 24
+    },
+    "access": {
+      "hasProgram": false,
+      "schools": 59,
+      "seats": 6005,
+      "schoolsWithSeats": 35,
+      "seatsCoveragePct": 59,
+      "seatsPerSchool": 172
+    }
+  },
+  "OH": {
+    "name": "Ohio",
+    "abbr": "OH",
+    "program": null,
+    "schools": {
+      "count": 896,
+      "approx": 39,
+      "religion": {
+        "Not reported": 896
+      },
+      "level": {
+        "Combined": 646,
+        "Elementary": 156,
+        "Secondary": 94
+      },
+      "coed": {
+        "Not reported": 896
+      },
+      "type": {
+        "Not reported": 896
+      },
+      "sourceLabel": "state directory",
+      "sourceKey": "OH_SCHOOLS",
+      "totalEnrollment": 164821,
+      "schoolsWithEnrollment": 620,
+      "seatsStateReported": 0,
+      "seatsNces": 620,
+      "schoolsNoSeats": 276
+    },
+    "access": {
+      "hasProgram": false,
+      "schools": 896,
+      "seats": 164821,
+      "schoolsWithSeats": 620,
+      "seatsCoveragePct": 69,
+      "seatsPerSchool": 266
+    }
+  },
+  "OK": {
+    "name": "Oklahoma",
+    "abbr": "OK",
+    "program": null,
+    "schools": {
+      "count": 139,
+      "approx": 3,
+      "religion": {
+        "Catholic": 28,
+        "Other religious": 86,
+        "Nonsectarian": 25
+      },
+      "level": {
+        "Elementary": 76,
+        "Secondary": 6,
+        "Combined": 57
+      },
+      "coed": {
+        "Coed": 138,
+        "All-male": 1
+      },
+      "type": {
+        "Regular Elementary/Secondary": 108,
+        "Montessori": 8,
+        "Special Program Emphasis": 6,
+        "Early Childhood/Day Care": 8,
+        "Special Education": 5,
+        "Alternative": 3,
+        "Not reported": 1
+      },
+      "totalEnrollment": 32306,
+      "schoolsWithEnrollment": 138,
+      "seatsStateReported": 0,
+      "seatsNces": 138,
+      "schoolsNoSeats": 1
+    },
+    "access": {
+      "hasProgram": false,
+      "schools": 139,
+      "seats": 32306,
+      "schoolsWithSeats": 138,
+      "seatsCoveragePct": 99,
+      "seatsPerSchool": 234
+    }
+  },
+  "OR": {
+    "name": "Oregon",
+    "abbr": "OR",
+    "program": null,
+    "schools": null
+  },
+  "PA": {
+    "name": "Pennsylvania",
+    "abbr": "PA",
+    "program": null,
+    "schools": {
+      "count": 1542,
+      "approx": 118,
+      "religion": {
+        "Other religious": 795,
+        "Nonsectarian": 431,
+        "Catholic": 316
+      },
+      "level": {
+        "Elementary": 992,
+        "Combined": 424,
+        "Secondary": 123,
+        "Not reported": 3
+      },
+      "coed": {
+        "Coed": 1460,
+        "All-male": 30,
+        "Not reported": 29,
+        "All-female": 23
+      },
+      "type": {
+        "Regular Elementary/Secondary": 1076,
+        "Early Childhood/Day Care": 164,
+        "Special Education": 138,
+        "Montessori": 70,
+        "Not reported": 34,
+        "Alternative": 38,
+        "Special Program Emphasis": 20,
+        "Vocational/Technical": 2
+      },
+      "totalEnrollment": 197088,
+      "schoolsWithEnrollment": 1525,
+      "seatsStateReported": 0,
+      "seatsNces": 1525,
+      "schoolsNoSeats": 17
+    },
+    "access": {
+      "hasProgram": false,
+      "schools": 1542,
+      "seats": 197088,
+      "schoolsWithSeats": 1525,
+      "seatsCoveragePct": 99,
+      "seatsPerSchool": 129
+    }
+  },
+  "RI": {
+    "name": "Rhode Island",
+    "abbr": "RI",
+    "program": {
+      "label": "SGO Scholarships (2025, 5 SGOs combined)",
+      "total": 678,
+      "unit": "scholarships",
+      "areaCount": 50,
+      "areaLabel": "zip code",
+      "topName": "Zip 02860",
+      "topValue": 63
+    },
+    "schools": {
+      "count": 81,
+      "approx": 5,
+      "religion": {
+        "Not reported": 81
+      },
+      "level": {
+        "Not reported": 81
+      },
+      "coed": {
+        "Not reported": 81
+      },
+      "type": {
+        "Not reported": 81
+      },
+      "sourceLabel": "state directory",
+      "sourceKey": "RI_SCHOOLS",
+      "totalEnrollment": 6139,
+      "schoolsWithEnrollment": 28,
+      "seatsStateReported": 0,
+      "seatsNces": 28,
+      "schoolsNoSeats": 53
+    },
+    "access": {
+      "hasProgram": true,
+      "schools": 81,
+      "seats": 6139,
+      "schoolsWithSeats": 28,
+      "seatsCoveragePct": 35,
+      "seatsPerSchool": 219,
+      "participation": 678,
+      "unit": "SGO scholarships",
+      "areaUnit": "zip code",
+      "areas": 50,
+      "participantsPerSeat": 0.11,
+      "participantsPerSchool": 8,
+      "areasNoSupply": 17,
+      "pctPartNoSupply": 9,
+      "corr": 0.3,
+      "corrStrength": "weak",
+      "spearman": 0.44,
+      "capacitySignal": "ample private-school capacity relative to program use",
+      "schoolAgePop": 148758,
+      "popCoveragePct": 100,
+      "takeUpRatePct": 0.5,
+      "seatsPer1000Kids": 38,
+      "acsPrivatePct": 13.2,
+      "pctChildrenInDesert": 56,
+      "accessGini": 0.75,
+      "rateCorr": 0.34
+    }
+  },
+  "SC": {
+    "name": "South Carolina",
+    "abbr": "SC",
+    "program": null,
+    "schools": {
+      "count": 285,
+      "approx": 10,
+      "religion": {
+        "Other religious": 181,
+        "Nonsectarian": 75,
+        "Catholic": 29
+      },
+      "level": {
+        "Elementary": 132,
+        "Combined": 145,
+        "Secondary": 8
+      },
+      "coed": {
+        "Coed": 275,
+        "All-male": 4,
+        "Not reported": 6
+      },
+      "type": {
+        "Regular Elementary/Secondary": 180,
+        "Montessori": 25,
+        "Special Program Emphasis": 11,
+        "Early Childhood/Day Care": 47,
+        "Alternative": 7,
+        "Special Education": 9,
+        "Not reported": 6
+      },
+      "totalEnrollment": 58606,
+      "schoolsWithEnrollment": 285,
+      "seatsStateReported": 0,
+      "seatsNces": 285,
+      "schoolsNoSeats": 0
+    },
+    "access": {
+      "hasProgram": false,
+      "schools": 285,
+      "seats": 58606,
+      "schoolsWithSeats": 285,
+      "seatsCoveragePct": 100,
+      "seatsPerSchool": 206
+    }
+  },
+  "SD": {
+    "name": "South Dakota",
+    "abbr": "SD",
+    "program": null,
+    "schools": {
+      "count": 67,
+      "approx": 2,
+      "religion": {
+        "Catholic": 23,
+        "Other religious": 31,
+        "Nonsectarian": 13
+      },
+      "level": {
+        "Combined": 22,
+        "Elementary": 42,
+        "Secondary": 3
+      },
+      "coed": {
+        "Coed": 65,
+        "All-male": 2
+      },
+      "type": {
+        "Regular Elementary/Secondary": 53,
+        "Alternative": 5,
+        "Montessori": 4,
+        "Special Education": 4,
+        "Not reported": 1
+      },
+      "totalEnrollment": 12968,
+      "schoolsWithEnrollment": 67,
+      "seatsStateReported": 0,
+      "seatsNces": 67,
+      "schoolsNoSeats": 0
+    },
+    "access": {
+      "hasProgram": false,
+      "schools": 67,
+      "seats": 12968,
+      "schoolsWithSeats": 67,
+      "seatsCoveragePct": 100,
+      "seatsPerSchool": 194
+    }
+  },
+  "TN": {
+    "name": "Tennessee",
+    "abbr": "TN",
+    "program": null,
+    "schools": {
+      "count": 671,
+      "approx": 54,
+      "religion": {
+        "Not reported": 671
+      },
+      "level": {
+        "Combined": 490,
+        "Elementary": 141,
+        "Secondary": 40
+      },
+      "coed": {
+        "Not reported": 671
+      },
+      "type": {
+        "Not reported": 671
+      },
+      "totalEnrollment": 191437,
+      "schoolsWithEnrollment": 630,
+      "sourceLabel": "state directory",
+      "sourceKey": "TN_SCHOOLS",
+      "seatsStateReported": 628,
+      "seatsNces": 2,
+      "schoolsNoSeats": 41
+    },
+    "access": {
+      "hasProgram": false,
+      "schools": 671,
+      "seats": 191437,
+      "schoolsWithSeats": 630,
+      "seatsCoveragePct": 94,
+      "seatsPerSchool": 304
+    }
+  },
+  "TX": {
+    "name": "Texas",
+    "abbr": "TX",
+    "program": {
+      "label": "TEFA participants (2026-27)",
+      "total": 79753,
+      "unit": "students",
+      "areaCount": 334,
+      "areaLabel": "school district",
+      "topName": "Houston Independent School District",
+      "topValue": 3327
+    },
+    "schools": {
+      "count": 1307,
+      "approx": 26,
+      "religion": {
+        "Nonsectarian": 470,
+        "Other religious": 632,
+        "Catholic": 205
+      },
+      "level": {
+        "Elementary": 802,
+        "Combined": 428,
+        "Secondary": 75,
+        "Not reported": 2
+      },
+      "coed": {
+        "Coed": 1263,
+        "All-female": 12,
+        "All-male": 12,
+        "Not reported": 20
+      },
+      "type": {
+        "Early Childhood/Day Care": 212,
+        "Regular Elementary/Secondary": 705,
+        "Montessori": 184,
+        "Special Program Emphasis": 71,
+        "Alternative": 43,
+        "Not reported": 37,
+        "Special Education": 55
+      },
+      "totalEnrollment": 259636,
+      "schoolsWithEnrollment": 1295,
+      "seatsStateReported": 0,
+      "seatsNces": 1295,
+      "schoolsNoSeats": 12
+    },
+    "access": {
+      "hasProgram": true,
+      "schools": 1307,
+      "seats": 259636,
+      "schoolsWithSeats": 1295,
+      "seatsCoveragePct": 99,
+      "seatsPerSchool": 200,
+      "participation": 79753,
+      "unit": "TEFA participants",
+      "areaUnit": "school district",
+      "areas": 334,
+      "participantsPerSeat": 0.31,
+      "participantsPerSchool": 61,
+      "areasNoSupply": 118,
+      "pctPartNoSupply": 12,
+      "corr": 0.84,
+      "corrStrength": "strong",
+      "spearman": 0.68,
+      "capacitySignal": "ample private-school capacity relative to program use",
+      "schoolAgePop": 4906230,
+      "popCoveragePct": 97,
+      "takeUpRatePct": 1.6,
+      "seatsPer1000Kids": 52,
+      "acsPrivatePct": 9.3,
+      "pctChildrenInDesert": 11,
+      "accessGini": 0.48,
+      "rateCorr": 0.03
+    }
+  },
+  "UT": {
+    "name": "Utah",
+    "abbr": "UT",
+    "program": null,
+    "schools": {
+      "count": 115,
+      "approx": 18,
+      "religion": {
+        "Not reported": 115
+      },
+      "level": {
+        "Elementary": 27,
+        "Secondary": 24,
+        "Combined": 64
+      },
+      "coed": {
+        "Not reported": 115
+      },
+      "type": {
+        "Not reported": 115
+      },
+      "sourceLabel": "state directory",
+      "sourceKey": "UT_SCHOOLS",
+      "totalEnrollment": 13330,
+      "schoolsWithEnrollment": 65,
+      "seatsStateReported": 0,
+      "seatsNces": 65,
+      "schoolsNoSeats": 50
+    },
+    "access": {
+      "hasProgram": false,
+      "schools": 115,
+      "seats": 13330,
+      "schoolsWithSeats": 65,
+      "seatsCoveragePct": 57,
+      "seatsPerSchool": 205
+    }
+  },
+  "VT": {
+    "name": "Vermont",
+    "abbr": "VT",
+    "program": null,
+    "schools": null
+  },
+  "VA": {
+    "name": "Virginia",
+    "abbr": "VA",
+    "program": null,
+    "schools": {
+      "count": 642,
+      "approx": 23,
+      "religion": {
+        "Other religious": 267,
+        "Nonsectarian": 301,
+        "Catholic": 74
+      },
+      "level": {
+        "Elementary": 347,
+        "Combined": 241,
+        "Not reported": 4,
+        "Secondary": 50
+      },
+      "coed": {
+        "Coed": 614,
+        "Not reported": 8,
+        "All-female": 7,
+        "All-male": 13
+      },
+      "type": {
+        "Regular Elementary/Secondary": 346,
+        "Special Education": 67,
+        "Early Childhood/Day Care": 79,
+        "Montessori": 91,
+        "Not reported": 16,
+        "Special Program Emphasis": 25,
+        "Alternative": 18
+      },
+      "totalEnrollment": 117521,
+      "schoolsWithEnrollment": 633,
+      "seatsStateReported": 0,
+      "seatsNces": 633,
+      "schoolsNoSeats": 9
+    },
+    "access": {
+      "hasProgram": false,
+      "schools": 642,
+      "seats": 117521,
+      "schoolsWithSeats": 633,
+      "seatsCoveragePct": 99,
+      "seatsPerSchool": 186
+    }
+  },
+  "WA": {
+    "name": "Washington",
+    "abbr": "WA",
+    "program": null,
+    "schools": null
+  },
+  "WV": {
+    "name": "West Virginia",
+    "abbr": "WV",
+    "program": {
+      "label": "Hope Scholarship recipients (2024-25)",
+      "total": 10530,
+      "unit": "recipients",
+      "areaCount": 55,
+      "areaLabel": "county",
+      "topName": "Kanawha County",
+      "topValue": 1293
+    },
+    "schools": {
+      "count": 100,
+      "approx": 12,
+      "religion": {
+        "Other religious": 66,
+        "Catholic": 21,
+        "Nonsectarian": 13
+      },
+      "level": {
+        "Combined": 46,
+        "Elementary": 49,
+        "Secondary": 5
+      },
+      "coed": {
+        "Coed": 97,
+        "All-male": 1,
+        "Not reported": 2
+      },
+      "type": {
+        "Regular Elementary/Secondary": 81,
+        "Early Childhood/Day Care": 5,
+        "Alternative": 2,
+        "Montessori": 4,
+        "Special Program Emphasis": 4,
+        "Special Education": 2,
+        "Not reported": 2
+      },
+      "totalEnrollment": 10477,
+      "schoolsWithEnrollment": 99,
+      "seatsStateReported": 0,
+      "seatsNces": 99,
+      "schoolsNoSeats": 1
+    },
+    "access": {
+      "hasProgram": true,
+      "schools": 100,
+      "seats": 10477,
+      "schoolsWithSeats": 99,
+      "seatsCoveragePct": 99,
+      "seatsPerSchool": 106,
+      "participation": 10530,
+      "unit": "Hope recipients",
+      "areaUnit": "county",
+      "areas": 55,
+      "participantsPerSeat": 1.01,
+      "participantsPerSchool": 105,
+      "areasNoSupply": 18,
+      "pctPartNoSupply": 8,
+      "corr": 0.75,
+      "corrStrength": "strong",
+      "spearman": 0.79,
+      "capacitySignal": "program use is roughly balanced with private-school capacity",
+      "schoolAgePop": 267938,
+      "popCoveragePct": 100,
+      "takeUpRatePct": 3.9,
+      "seatsPer1000Kids": 39,
+      "acsPrivatePct": 11.1,
+      "pctChildrenInDesert": 14,
+      "accessGini": 0.51,
+      "rateCorr": 0.46
+    }
+  },
+  "WI": {
+    "name": "Wisconsin",
+    "abbr": "WI",
+    "program": {
+      "label": "Choice Program (MPCP/RPCP/WPCP) + SNSP enrollment (2025-26, HC)",
+      "total": 60927,
+      "unit": "students",
+      "areaCount": 201,
+      "areaLabel": "zip code",
+      "topName": "53204",
+      "topValue": 7609
+    },
+    "schools": {
+      "count": 444,
+      "approx": 11,
+      "religion": {
+        "Not reported": 444
+      },
+      "level": {
+        "Combined": 77,
+        "Elementary": 304,
+        "Secondary": 63
+      },
+      "coed": {
+        "Not reported": 444
+      },
+      "totalEnrollment": 60963,
+      "schoolsWithEnrollment": 444,
+      "sourceLabel": "state directory",
+      "sourceKey": "WI",
+      "type": {
+        "Regular Elementary/Secondary": 444
+      },
+      "seatsStateReported": 444,
+      "seatsNces": 0,
+      "schoolsNoSeats": 0
+    },
+    "access": {
+      "hasProgram": true,
+      "schools": 444,
+      "seats": 60963,
+      "schoolsWithSeats": 444,
+      "seatsCoveragePct": 100,
+      "seatsPerSchool": 137,
+      "participation": 60927,
+      "unit": "Choice headcount",
+      "areaUnit": "zip code",
+      "areas": 201,
+      "participantsPerSeat": 1.0,
+      "participantsPerSchool": 137,
+      "areasNoSupply": 2,
+      "pctPartNoSupply": 1,
+      "corr": 0.99,
+      "corrStrength": "strong",
+      "spearman": 0.98,
+      "capacitySignal": "program use is roughly balanced with private-school capacity",
+      "schoolAgePop": 607017,
+      "popCoveragePct": 100,
+      "takeUpRatePct": 10.0,
+      "seatsPer1000Kids": 98,
+      "acsPrivatePct": 16.4,
+      "pctChildrenInDesert": 1,
+      "accessGini": 0.61,
+      "rateCorr": 0.96
+    }
+  },
+  "WY": {
+    "name": "Wyoming",
+    "abbr": "WY",
+    "program": null,
+    "schools": {
+      "count": 29,
+      "approx": 0,
+      "religion": {
+        "Nonsectarian": 11,
+        "Other religious": 12,
+        "Catholic": 6
+      },
+      "level": {
+        "Elementary": 16,
+        "Combined": 11,
+        "Secondary": 2
+      },
+      "coed": {
+        "Coed": 27,
+        "All-male": 1,
+        "All-female": 1
+      },
+      "type": {
+        "Special Education": 1,
+        "Alternative": 4,
+        "Regular Elementary/Secondary": 18,
+        "Early Childhood/Day Care": 1,
+        "Montessori": 3,
+        "Special Program Emphasis": 2
+      },
+      "totalEnrollment": 2111,
+      "schoolsWithEnrollment": 29,
+      "seatsStateReported": 0,
+      "seatsNces": 29,
+      "schoolsNoSeats": 0
+    },
+    "access": {
+      "hasProgram": false,
+      "schools": 29,
+      "seats": 2111,
+      "schoolsWithSeats": 29,
+      "seatsCoveragePct": 100,
+      "seatsPerSchool": 73
+    }
+  }
+}

@@ -1,0 +1,151 @@
+{
+  "name": "United States (all tracked states)",
+  "totalParticipation": 594164,
+  "programBreakdown": [
+    {
+      "abbr": "NC",
+      "name": "North Carolina",
+      "total": 106867,
+      "unit": "recipients",
+      "label": "Opportunity Scholarship recipients (2024-25)"
+    },
+    {
+      "abbr": "AZ",
+      "name": "Arizona",
+      "total": 102211,
+      "unit": "students",
+      "label": "ESA students (FY2026, as of Q3, partial year)"
+    },
+    {
+      "abbr": "FL",
+      "name": "Florida",
+      "total": 100025,
+      "unit": "students",
+      "label": "FTC Scholarship students (2022-23)"
+    },
+    {
+      "abbr": "TX",
+      "name": "Texas",
+      "total": 79753,
+      "unit": "students",
+      "label": "TEFA participants (2026-27)"
+    },
+    {
+      "abbr": "IN",
+      "name": "Indiana",
+      "total": 75930,
+      "unit": "students",
+      "label": "Choice Scholarship students (2024-25, Period 1 + 2 combined)"
+    },
+    {
+      "abbr": "WI",
+      "name": "Wisconsin",
+      "total": 60927,
+      "unit": "students",
+      "label": "Choice Program (MPCP/RPCP/WPCP) + SNSP enrollment (2025-26, HC)"
+    },
+    {
+      "abbr": "AK",
+      "name": "Alaska",
+      "total": 22959,
+      "unit": "students",
+      "label": "Correspondence Study students (FY2024)"
+    },
+    {
+      "abbr": "MO",
+      "name": "Missouri",
+      "total": 11598,
+      "unit": "students",
+      "label": "MOScholars ESA students (SY2026-27)"
+    },
+    {
+      "abbr": "WV",
+      "name": "West Virginia",
+      "total": 10530,
+      "unit": "recipients",
+      "label": "Hope Scholarship recipients (2024-25)"
+    },
+    {
+      "abbr": "NH",
+      "name": "New Hampshire",
+      "total": 10510,
+      "unit": "enrollees",
+      "label": "EFA enrollees (SY2025-26)"
+    },
+    {
+      "abbr": "AR",
+      "name": "Arkansas",
+      "total": 9380,
+      "unit": "students",
+      "label": "EFA participants (2024-25)"
+    },
+    {
+      "abbr": "MD",
+      "name": "Maryland",
+      "total": 2796,
+      "unit": "students",
+      "label": "BOOST scholarships (2025-26)"
+    },
+    {
+      "abbr": "RI",
+      "name": "Rhode Island",
+      "total": 678,
+      "unit": "scholarships",
+      "label": "SGO Scholarships (2025, 5 SGOs combined)"
+    }
+  ],
+  "schools": {
+    "count": 15852,
+    "approx": 1395,
+    "stateCount": 35,
+    "religion": {
+      "Not reported": 5599,
+      "Other religious": 4887,
+      "Nonsectarian": 3832,
+      "Catholic": 1534
+    },
+    "level": {
+      "Combined": 6818,
+      "Elementary": 6039,
+      "Not reported": 1823,
+      "Secondary": 1172
+    },
+    "coed": {
+      "Coed": 9877,
+      "Not reported": 5727,
+      "All-male": 148,
+      "All-female": 100
+    },
+    "totalEnrollment": 2726725,
+    "schoolsWithEnrollment": 13648,
+    "sourceLabel": "NCES + state directories",
+    "seatsStateReported": 4192,
+    "seatsNces": 9375,
+    "seatsProgramReported": 81,
+    "schoolsNoSeats": 2204,
+    "programOnlyExtras": 41,
+    "mapPoints": 15893
+  },
+  "access": {
+    "schools": 15852,
+    "seats": 2726725,
+    "seatsCoveragePct": 86,
+    "programStates": 13,
+    "ppsMin": [
+      "MD",
+      0.02
+    ],
+    "ppsMax": [
+      "AK",
+      8.0
+    ],
+    "ppsMedian": [
+      "IN",
+      0.86
+    ],
+    "corrMin": 0.11,
+    "corrMax": 0.99,
+    "usSchoolAgePop": 54735609,
+    "usPrivatePct": 12.7
+  }
+}
