@@ -365,6 +365,19 @@
   .wiz-row .r-sub { color: var(--text-muted); font-size: 11.5px; }
   .wiz-row .r-val { color: var(--text-secondary); white-space: nowrap; text-align: right; }
   .wiz-note { font-size: 12px; color: var(--text-muted); margin-top: 13px; line-height: 1.55; }
+  /* wizard results render in the side panel, where rows are clickable and tie
+     back to a dot / outline on the map */
+  .wiz-clickable { cursor: pointer; margin: 0 -6px; padding-left: 6px; padding-right: 6px; border-radius: 6px; }
+  .wiz-clickable:hover { background: var(--page-plane); }
+  .wiz-rank {
+    display: inline-block; min-width: 17px; height: 17px; line-height: 17px; margin-right: 7px;
+    text-align: center; border-radius: 4px; background: #b3391a; color: #fff;
+    font-size: 10.5px; font-weight: 700; font-variant-numeric: tabular-nums;
+  }
+  .wiz-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: #1c6b45; margin-right: 7px; vertical-align: middle;
+  }
 </style>
 </head>
 <body>
@@ -656,6 +669,19 @@ function colorFor(v, edges, ramp) {
   return ramp[ramp.length - 1];
 }
 
+// ---- gentle map motion ----
+// Every programmatic view change (search, wizard, area drill-down, region
+// switch) goes through these so the map eases instead of snapping. One place to
+// retune the feel; `duration` is seconds, easeLinearity lower = more easing.
+const EASE = { duration: 1.15, easeLinearity: 0.22 };
+function gentleFlyTo(lat, lon, zoom) {
+  map.flyTo([lat, lon], zoom, EASE);
+}
+function gentleFlyToBounds(bounds, opts) {
+  if (!bounds || !bounds.isValid || !bounds.isValid()) return;
+  map.flyToBounds(bounds, Object.assign({ padding: [46, 46] }, EASE, opts || {}));
+}
+
 // ---- state profile panel logic ----
 const spPanel = document.getElementById('state-profile');
 const spTitle = document.getElementById('sp-title');
@@ -678,6 +704,7 @@ function enableSchoolsLayer() {
 // Re-render whichever profile view is open so its toggle reflects the map.
 function refreshCurrentView() {
   if (currentView === 'national') showNationalProfile();
+  else if (currentView === 'wizard') return;  // wizard results own the panel until dismissed
   else if (currentView === 'area' && currentArea) showAreaDetail(currentArea.abbr, currentArea.layerIdx, currentArea.fi, true);
   else if (currentView === 'state' && currentAbbr) showStateProfile(currentAbbr);
 }
@@ -800,7 +827,7 @@ function backToState(abbr) {
   // in - the region switcher locks the map to that region's bounds, so a stale
   // CONUS view would just be clamped somewhere arbitrary.
   if (preDrillView && preDrillView.region === activeRegion) {
-    map.setView(preDrillView.center, preDrillView.zoom);
+    map.flyTo(preDrillView.center, preDrillView.zoom, EASE);
   }
   showStateProfile(abbr);
 }
@@ -818,7 +845,7 @@ function showAreaDetail(abbr, layerIdx, fi, keepView) {
   // returns to the original view rather than the previous area's frame.
   if (!keepView) {
     if (!preDrillView) { preDrillView = { center: map.getCenter(), zoom: map.getZoom(), region: activeRegion }; }
-    try { map.fitBounds(L.geoJSON(f).getBounds(), { padding: [40, 40], maxZoom: 11 }); } catch (err) {}
+    try { gentleFlyToBounds(L.geoJSON(f).getBounds(), { maxZoom: 11 }); } catch (err) {}
   }
   currentView = 'area';
   currentAbbr = abbr;
@@ -1139,8 +1166,23 @@ const WIZ_CFG = {
   },
 };
 
-function openWizard(mode) { WIZ.mode = mode; WIZ.step = 0; WIZ.ans = {}; WIZ.loc = null; WIZ.partOnly = false; document.getElementById('wizard').classList.add('open'); renderWizard(); }
+function openWizard(mode) { WIZ.mode = mode; WIZ.step = 0; WIZ.ans = {}; WIZ.loc = null; WIZ.partOnly = false; clearWizardMapLayers(); document.getElementById('wizard').classList.add('open'); renderWizard(); }
 function closeWizard() { document.getElementById('wizard').classList.remove('open'); }
+
+// Results leave the centered card and take over the side panel, so the map stays
+// visible while they're read. The card is dismissed, not just hidden behind.
+function showWizardResults() {
+  const cfg = WIZ_CFG[WIZ.mode];
+  document.getElementById('wizard').classList.remove('open');
+  const html = (WIZ.mode === 'entrepreneur' ? entrepreneurResults() : parentResults());
+  currentView = 'wizard';
+  currentArea = null;
+  spTitle.textContent = cfg.title;
+  spBody.innerHTML = html;
+  spBody.scrollTop = 0;
+  openPanel();
+  if (WIZ.mode === 'entrepreneur') paintEntrepreneurResults(); else paintParentResults();
+}
 function wizBack() { if (WIZ.step > 0) { WIZ.step--; renderWizard(); } }
 function wizAnswer(key, val) { WIZ.ans[key] = val; WIZ.step++; renderWizard(); }
 
@@ -1148,7 +1190,9 @@ function renderWizard() {
   const cfg = WIZ_CFG[WIZ.mode];
   document.getElementById('wiz-title').textContent = cfg.title;
   const body = document.getElementById('wiz-body');
-  if (WIZ.step >= cfg.steps.length) { body.innerHTML = (WIZ.mode === 'entrepreneur' ? entrepreneurResults() : parentResults()); return; }
+  if (WIZ.step >= cfg.steps.length) { showWizardResults(); return; }
+  // stepping back out of the results returns to the question card
+  document.getElementById('wizard').classList.add('open');
   const st = cfg.steps[WIZ.step];
   let inner = `<div class="wiz-progress">Step ${WIZ.step + 1} of ${cfg.steps.length}</div><div class="wiz-q">${st.q}</div>`;
   if (st.type === 'state') {
@@ -1211,8 +1255,18 @@ function entrepreneurResults() {
     else rows.sort(function(p, q) { return ((q.pps * 8) + q.desert) - ((p.pps * 8) + p.desert); });
     rows = rows.slice(0, 6);
     const by = priority === 'demand' ? 'total program demand' : priority === 'whitespace' ? 'fewest private-school seats per child' : 'demand outstripping ' + modelLbl + 'private-school supply';
+    // outline the ranked states themselves, so the list has a shape on the map
+    const wantAbbr = {}; rows.forEach(function(r, i) { wantAbbr[r.x] = { rank: i + 1, r: r }; });
+    WIZ.lastFeatures = (stateBoundariesGeo.features || []).filter(function(f) {
+      return wantAbbr[FIPS_TO_ABBR[f.properties.statefp]];
+    }).map(function(f) {
+      const hit = wantAbbr[FIPS_TO_ABBR[f.properties.statefp]];
+      return { type: 'Feature', properties: f.properties, geometry: f.geometry,
+               __wiz: { rank: hit.rank, name: hit.r.name,
+                        sub: fmt(hit.r.total) + ' program students &middot; ' + hit.r.pps + ' per seat' } };
+    }).sort(function(p, q) { return p.__wiz.rank - q.__wiz.rank; });
     html += `<div class="wiz-res-verdict">Program states ranked by ${by} &mdash; the biggest openings for a new ${levelLbl}school.</div>`;
-    html += rows.map(function(r) { return `<div class="wiz-row"><div><div class="r-main">${r.name}</div><div class="r-sub">${fmt(r.total)} program students &middot; ${r.pps} per seat &middot; ${r.desert}% of kids in a desert &middot; ${r.seatsK} seats / 1,000 kids</div></div><div class="r-val"><button class="wiz-opt" style="padding:5px 10px;" onclick="closeWizard();showStateProfile('${r.x}')">Open</button></div></div>`; }).join('');
+    html += rows.map(function(r, i) { return `<div class="wiz-row wiz-clickable" onclick="wizFocusArea(${i})"><div><div class="r-main"><span class="wiz-rank">${i + 1}</span>${r.name}</div><div class="r-sub">${fmt(r.total)} program students &middot; ${r.pps} per seat &middot; ${r.desert}% of kids in a desert &middot; ${r.seatsK} seats / 1,000 kids</div></div><div class="r-val"><button class="wiz-opt" style="padding:5px 10px;" onclick="event.stopPropagation();showStateProfile('${r.x}')">Open</button></div></div>`; }).join('');
     html += `<div class="wiz-note">Pick a single state to see the specific ZIPs, counties, or districts with the most demand and least competition within your catchment radius. &ldquo;Per seat&rdquo; above 1 means more program users than local private-school seats.</div>`;
     return html;
   }
@@ -1225,7 +1279,7 @@ function entrepreneurResults() {
     const ctr = featureCentroid(f.geometry);
     let comp = 0;
     schools.forEach(function(s) { if (milesBetween(ctr[1], ctr[0], s.lat, s.lon) <= radius) comp++; });
-    return { name: f.properties.name || ('ZIP ' + f.properties.zip), part: +f.properties[lk.valueKey] || 0, comp: comp };
+    return { name: f.properties.name || ('ZIP ' + f.properties.zip), part: +f.properties[lk.valueKey] || 0, comp: comp, f: f };
   }).filter(function(z) { return z.part > 0; });
   if (priority === 'demand') areas.sort(function(p, q) { return q.part - p.part; });
   else if (priority === 'whitespace') areas.sort(function(p, q) { return (p.comp - q.comp) || (q.part - p.part); });
@@ -1233,9 +1287,117 @@ function entrepreneurResults() {
   const c = prof.access || {};
   html += `<div class="wiz-res-verdict">In ${prof.name}, these ${lk.geoUnit}s have the most program demand with the fewest ${modelLbl}${levelLbl}private schools within ${radius} miles &mdash; the strongest openings for a new school.</div>`;
   if (model !== 'any' && !relOk) html += `<div class="wiz-note" style="margin-top:0;">Note: ${prof.name}'s directory doesn't report religious affiliation, so the ${modelLbl}filter couldn't be applied here &mdash; competition counts all private schools.</div>`;
-  html += areas.slice(0, 10).map(function(z) { return `<div class="wiz-row"><div class="r-main">${z.name}</div><div class="r-val">${fmt(z.part)} students &middot; ${z.comp} school${z.comp === 1 ? '' : 's'} within ${radius} mi</div></div>`; }).join('') || '<div class="wiz-note">No areas with participation found for this filter.</div>';
+  const top = areas.slice(0, 10);
+  // the same ten, outlined on the map (see paintEntrepreneurResults)
+  WIZ.lastFeatures = top.map(function(z, i) {
+    return { type: 'Feature', properties: z.f.properties, geometry: z.f.geometry,
+             __wiz: { rank: i + 1, name: z.name, abbr: abbr, geo: lk.geo, orig: z.f,
+                      sub: fmt(z.part) + ' students &middot; ' + z.comp + ' school' + (z.comp === 1 ? '' : 's') + ' within ' + radius + ' mi' } };
+  });
+  html += top.map(function(z, i) { return `<div class="wiz-row wiz-clickable" onclick="wizFocusArea(${i})"><div class="r-main"><span class="wiz-rank">${i + 1}</span>${z.name}</div><div class="r-val">${fmt(z.part)} students &middot; ${z.comp} school${z.comp === 1 ? '' : 's'} within ${radius} mi</div></div>`; }).join('') || '<div class="wiz-note">No areas with participation found for this filter.</div>';
   html += `<div class="wiz-note">Statewide: ${c.participantsPerSeat != null ? c.participantsPerSeat + ' participants per private-school seat, ' : ''}${c.pctChildrenInDesert != null ? c.pctChildrenInDesert + '% of children in an access desert. ' : ''}Competition counts existing ${modelLbl}${levelLbl}private schools within ${radius} miles of each ${lk.geoUnit}'s center.</div>`;
   return html;
+}
+
+// ---- Guided-tool results ON the map ----
+// The wizard asks its questions in the centered card, then hands the RESULTS to
+// the side panel and paints them on the map, so the answer and the geography are
+// visible at the same time instead of the card covering the map.
+const WIZ_MAP = { dots: null, outlines: null, ring: null, prevSchoolMode: null };
+const WIZ_DOT = '#1c6b45';       // matched schools (parent tool)
+const WIZ_OUTLINE = '#b3391a';   // opportunity areas (entrepreneur tool)
+
+function clearWizardMapLayers() {
+  ['dots', 'outlines', 'ring'].forEach(function(k) {
+    if (WIZ_MAP[k]) { map.removeLayer(WIZ_MAP[k]); WIZ_MAP[k] = null; }
+  });
+  map.closePopup();
+  // restore whatever school display the user had before we isolated the matches
+  if (WIZ_MAP.prevSchoolMode !== null) {
+    setAllSchoolMode(WIZ_MAP.prevSchoolMode);
+    WIZ_MAP.prevSchoolMode = null;
+  }
+}
+
+// Parent tool: the matching schools inside the radius, as individual dots with
+// every other school hidden - so the results stand alone rather than being lost
+// in the nationwide layer.
+function paintParentResults() {
+  clearWizardMapLayers();
+  const loc = WIZ.loc, near = WIZ.lastNear || [];
+  if (!loc) return;
+  const radius = parseInt(WIZ.ans.radius, 10) || 50;
+
+  if (WIZ_MAP.prevSchoolMode === null) {
+    WIZ_MAP.prevSchoolMode = aggregateSchoolMode();
+    setAllSchoolMode('none');
+  }
+
+  WIZ_MAP.ring = L.circle([loc.lat, loc.lon], {
+    radius: radius * 1609.34, pane: 'wizPane', color: '#4a4842', weight: 1.3,
+    dashArray: '6,6', fill: true, fillColor: '#4a4842', fillOpacity: 0.04, opacity: 0.75,
+    interactive: false   // pure context - must not swallow clicks meant for the map
+  }).addTo(map);
+
+  WIZ_MAP.dots = L.featureGroup(near.map(function(x, i) {
+    const m = L.circleMarker([x.s.lat, x.s.lon], {
+      radius: 6, pane: 'wizDotsPane', fillColor: WIZ_DOT, color: '#ffffff',
+      weight: 1.6, fillOpacity: 0.95
+    });
+    m.bindTooltip(`<div class="school-tooltip"><div class="zt-head">${x.s.name}</div>` +
+      `<div class="zt-total">${x.d.toFixed(1)} mi &mdash; ${x.s.city}</div></div>`,
+      { className: 'school-tt', direction: 'top' });
+    m.on('click', function(e) { L.DomEvent.stop(e); wizFocusSchool(i); });
+    return m;
+  })).addTo(map);
+
+  const b = near.length ? WIZ_MAP.dots.getBounds().extend([loc.lat, loc.lon]) : WIZ_MAP.ring.getBounds();
+  gentleFlyToBounds(b, { maxZoom: 12 });
+}
+
+// Clicking a result row (or its dot) pans to that school and opens its popup.
+function wizFocusSchool(i) {
+  const x = (WIZ.lastNear || [])[i];
+  if (!x) return;
+  gentleFlyTo(x.s.lat, x.s.lon, Math.max(map.getZoom(), 12));
+  L.popup({ offset: [0, -6] })
+    .setLatLng([x.s.lat, x.s.lon])
+    .setContent(`<b>${x.s.name}</b><br>${x.s.address ? x.s.address + '<br>' : ''}${x.s.city}, ${x.abbr}` +
+      `<br>${x.d.toFixed(1)} miles away${x.s.enroll ? ' &middot; ' + fmt(x.s.enroll) + ' students' : ''}`)
+    .openOn(map);
+}
+
+// Entrepreneur tool: outline each area named as a top opportunity. Outline only
+// (barely-there fill, just enough to be clickable) so the choropleth underneath
+// still reads through.
+function paintEntrepreneurResults() {
+  clearWizardMapLayers();
+  const feats = WIZ.lastFeatures || [];
+  if (!feats.length) return;
+  WIZ_MAP.outlines = L.geoJSON({ type: 'FeatureCollection', features: feats }, {
+    pane: 'wizPane',
+    style: function() {
+      return { color: WIZ_OUTLINE, weight: 2.6, opacity: 0.95, fill: true,
+               fillColor: WIZ_OUTLINE, fillOpacity: 0.07, lineJoin: 'round' };
+    },
+    onEachFeature: function(feature, layer) {
+      const m = feature.__wiz || {};
+      layer.bindTooltip(`<div class="poly-tooltip"><div class="zt-head">#${m.rank} &middot; ${m.name}</div>` +
+        `<div class="zt-total">${m.sub || ''}</div></div>`, { sticky: true, className: 'poly-tt', direction: 'top' });
+      layer.on('mouseover', function() { layer.setStyle({ weight: 4, fillOpacity: 0.16 }); layer.bringToFront(); });
+      layer.on('mouseout', function() { layer.setStyle({ weight: 2.6, fillOpacity: 0.07 }); });
+      layer.on('click', function(e) { L.DomEvent.stop(e); if (m.abbr && m.orig) drillToArea(m.abbr, m.geo, m.orig); });
+    }
+  }).addTo(map);
+  gentleFlyToBounds(WIZ_MAP.outlines.getBounds(), { maxZoom: 10 });
+}
+
+// Focus one opportunity area from its result row.
+function wizFocusArea(i) {
+  const list = WIZ.lastFeatures || [];
+  const f = list.filter(function(x) { return x.__wiz && x.__wiz.rank === i + 1; })[0] || list[i];
+  if (!f) return;
+  gentleFlyToBounds(L.geoJSON(f).getBounds(), { maxZoom: 11 });
 }
 
 function wizTogglePart() { WIZ.partOnly = !WIZ.partOnly; renderWizard(); }
@@ -1257,12 +1419,16 @@ function parentResults() {
   if (prog) html += `<div class="wiz-res-verdict">${prof.name} offers <b>${prog.label}</b> &mdash; ${fmt(prog.total)} ${prog.unit} statewide. Your family may be eligible for funding toward private-school tuition. <button class="wiz-opt" style="display:inline-block;padding:3px 9px;margin-top:6px;" onclick="closeWizard();showStateProfile('${loc.abbr}')">See the program &rarr;</button></div>`;
   else html += `<div class="wiz-res-verdict">${prof ? prof.name : 'Your state'} has no school-choice program loaded here yet &mdash; the schools below would be private-pay unless a program applies.</div>`;
   if (anyPart) html += `<button class="wiz-opt" style="margin-bottom:11px;${WIZ.partOnly ? 'border-color:var(--accent);' : ''}" onclick="wizTogglePart()">${WIZ.partOnly ? '\u2713 Only schools that accept the scholarship &mdash; show all' : 'Show only schools that accept the scholarship'}</button>`;
+  // every match inside the radius is what gets dotted on the map; the list below
+  // stays capped at the 15 nearest, and row i lines up with dot i
+  WIZ.lastNear = near;
   html += `<div class="wiz-progress" style="margin-top:2px;">${fmt(near.length)} matching ${faithLbl}${levelLbl}private school${near.length === 1 ? '' : 's'} within ${radius} miles of ${loc.name}</div>`;
-  html += near.slice(0, 15).map(function(x) {
+  html += near.slice(0, 15).map(function(x, i) {
     const badge = (x.s.efa || x.s.boost || x.s.scholarship) ? ' <span style="color:var(--accent-dark);font-weight:600;">&middot; accepts funding</span>' : '';
-    return `<div class="wiz-row"><div><div class="r-main">${x.s.name}${badge}</div><div class="r-sub">${x.s.city}, ${x.abbr} &middot; ${x.s.level}${x.s.relig !== 'Not reported' ? ' &middot; ' + x.s.relig : ''}${x.s.enroll ? ' &middot; ' + fmt(x.s.enroll) + ' students' : ''}</div></div><div class="r-val">${x.d.toFixed(1)} mi</div></div>`;
+    return `<div class="wiz-row wiz-clickable" onclick="wizFocusSchool(${i})"><div><div class="r-main"><span class="wiz-dot"></span>${x.s.name}${badge}</div><div class="r-sub">${x.s.city}, ${x.abbr} &middot; ${x.s.level}${x.s.relig !== 'Not reported' ? ' &middot; ' + x.s.relig : ''}${x.s.enroll ? ' &middot; ' + fmt(x.s.enroll) + ' students' : ''}</div></div><div class="r-val">${x.d.toFixed(1)} mi</div></div>`;
   }).join('') || '<div class="wiz-note">No matching private schools within ' + radius + ' miles &mdash; an access desert for your criteria. Try a wider radius or fewer filters.</div>';
-  if (near.length > 15) html += `<div class="wiz-note">Showing the 15 nearest of ${fmt(near.length)}. Search this address on the map for the full list and gap analysis.</div>`;
+  if (near.length > 15) html += `<div class="wiz-note">Showing the 15 nearest of ${fmt(near.length)} &mdash; all ${fmt(near.length)} are dotted on the map.</div>`;
+  html += `<div class="wiz-note">Every other private school is hidden while these results are open, so your matches stand alone. Click a row or a dot to zoom to it.</div>`;
   return html;
 }
 
@@ -1270,6 +1436,7 @@ function showNationalProfile() {
   currentAbbr = null;
   currentView = 'national';
   currentArea = null; preDrillView = null;
+  clearWizardMapLayers();
   document.documentElement.style.setProperty('--accent', '#eb6834');
   spTitle.textContent = NATIONAL_PROFILE.name;
 
@@ -1288,6 +1455,7 @@ function showStateProfile(abbr) {
   currentAbbr = abbr;
   currentView = 'state';
   currentArea = null; preDrillView = null;
+  clearWizardMapLayers();
   document.documentElement.style.setProperty('--accent', STATE_ACCENT[abbr] || '#898781');
   spTitle.textContent = profile.name;
 
@@ -1327,6 +1495,13 @@ map.getPane('labelsPane').style.zIndex = 500;
 map.getPane('labelsPane').style.pointerEvents = 'none';
 map.createPane('schoolsPane');
 map.getPane('schoolsPane').style.zIndex = 625;
+// Guided-tool result layers sit between the choropleths and the school dots:
+// opportunity-area outlines / catchment ring below (610), and the wizard's own
+// matched-school dots above everything (640) so they read as the focus.
+map.createPane('wizPane');
+map.getPane('wizPane').style.zIndex = 610;
+map.createPane('wizDotsPane');
+map.getPane('wizDotsPane').style.zIndex = 640;
 
 // Base map WITHOUT labels so the choropleths color the land/water/roads only;
 // the label tiles are re-applied on top (labelsPane) so names stay crisp.
@@ -1610,14 +1785,24 @@ const REGION_VIEW = {
   hi:    { bounds: L.latLngBounds([[18.7, -160.6], [22.4, -154.6]]), minZoom: 6 }
 };
 let activeRegion = 'conus';
-function viewRegion(region) {
+let regionMoveToken = 0;
+// instant=true for programmatic calls that are followed by their own flyTo (page
+// load, address search) - otherwise the region change eases like everything else.
+function viewRegion(region, instant) {
   const v = REGION_VIEW[region];
   if (!v) return;
   activeRegion = region;
   map.setMaxBounds(null);
   map.setMinZoom(v.minZoom);
-  map.fitBounds(v.bounds, { padding: [10, 10] });
-  map.setMaxBounds(v.bounds);   // lock the view over this region
+  const token = ++regionMoveToken;
+  if (instant) {
+    map.fitBounds(v.bounds, { padding: [10, 10] });
+    map.setMaxBounds(v.bounds);   // lock the view over this region
+  } else {
+    // re-lock only once the flight lands; clamping mid-flight would jerk it
+    map.flyToBounds(v.bounds, Object.assign({ padding: [10, 10] }, EASE));
+    map.once('moveend', function() { if (token === regionMoveToken) map.setMaxBounds(v.bounds); });
+  }
   document.querySelectorAll('#region-switch button').forEach(function(b) {
     b.classList.toggle('active', b.dataset.region === region);
   });
@@ -1625,7 +1810,7 @@ function viewRegion(region) {
 document.querySelectorAll('#region-switch button').forEach(function(b) {
   b.addEventListener('click', function() { viewRegion(b.dataset.region); });
 });
-viewRegion('conus');
+viewRegion('conus', true);
 
 // ---- address search ----
 // Client-side geocode via OpenStreetMap Nominatim (no API key, CORS-enabled,
@@ -1858,8 +2043,8 @@ addrForm.addEventListener('submit', function(e) {
 
       enableSchoolsLayer();  // so nearby private-school access is visible
       const wasConus = (activeRegion === 'conus');
-      if (!wasConus) viewRegion('conus');  // search is CONUS-focused; snap back to the full US
-      const flyThere = function() { map.invalidateSize(); map.flyTo([lat, lon], 10, { duration: 1.1 }); };
+      if (!wasConus) viewRegion('conus', true);  // search is CONUS-focused; reset to the full US
+      const flyThere = function() { map.invalidateSize(); gentleFlyTo(lat, lon, 10); };
       if (wasConus) flyThere(); else setTimeout(flyThere, 160);
 
       let abbr = null;
@@ -1876,7 +2061,7 @@ addrForm.addEventListener('submit', function(e) {
 
 // Under type="module" the top-level scope isn't global, so expose the handlers
 // referenced by inline onclick="" attributes in the profile panel / About page.
-Object.assign(window, { calloutToggleSchools, calloutSetMode, openAbout, closeAbout, openMethod, closeMethod, showStateProfile, showAreaDetail, drillToArea, backToState, programCountsSelect, openData, closeData, downloadTable, openWizard, closeWizard, wizBack, wizAnswer, wizGeocode, wizTogglePart });
+Object.assign(window, { calloutToggleSchools, calloutSetMode, openAbout, closeAbout, openMethod, closeMethod, showStateProfile, showAreaDetail, drillToArea, backToState, programCountsSelect, openData, closeData, downloadTable, openWizard, closeWizard, wizBack, wizAnswer, wizGeocode, wizTogglePart, wizFocusSchool, wizFocusArea });
 </script>
 </body>
 </html>
