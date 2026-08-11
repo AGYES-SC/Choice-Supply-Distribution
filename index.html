@@ -280,8 +280,30 @@
   #state-profile .sp-card .lbl { font-size: 10.5px; color: var(--text-secondary); margin-top: 5px; line-height: 1.25; }
   #state-profile .sp-howlink { background: none; border: none; color: var(--accent-dark); font-size: 12px; font-weight: 600; cursor: pointer; padding: 4px 0; }
   #state-profile .sp-howlink:hover { text-decoration: underline; }
-  header #about-btn { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; font-size: 11.5px; font-weight: 600; color: var(--text-secondary); cursor: pointer; white-space: nowrap; }
-  header #about-btn:hover { background: var(--page-plane); color: var(--text-primary); }
+  header .hd-btn { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; font-size: 11.5px; font-weight: 600; color: var(--text-secondary); cursor: pointer; white-space: nowrap; }
+  header .hd-btn:hover { background: var(--page-plane); color: var(--text-primary); }
+  #data-page { position: fixed; inset: 0; z-index: 3000; background: var(--surface-1); overflow-y: auto; display: none; }
+  #data-page.open { display: block; }
+  #data-page .data-inner { max-width: 1000px; margin: 0 auto; padding: 40px 24px 80px; }
+  #data-page h2 { font-size: 25px; margin: 0 0 6px; color: var(--text-primary); letter-spacing: -0.01em; }
+  #data-page .data-close { position: fixed; top: 16px; right: 20px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; z-index: 3001; box-shadow: 0 2px 10px rgba(0,0,0,0.12); }
+  #data-page .data-close:hover { background: var(--gridline); }
+  details.data-state { border: 1px solid var(--gridline); border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+  details.data-state > summary { list-style: none; cursor: pointer; padding: 13px 16px; font-weight: 600; font-size: 14.5px; color: var(--text-primary); display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--page-plane); }
+  details.data-state > summary::-webkit-details-marker { display: none; }
+  details.data-state > summary::after { content: '\25B8'; color: var(--text-muted); font-size: 12px; transition: transform .15s; }
+  details.data-state[open] > summary::after { transform: rotate(90deg); }
+  .data-badge { font-weight: 500; font-size: 12px; color: var(--text-muted); margin-left: auto; }
+  .data-state-body { padding: 6px 16px 18px; }
+  .data-subhead { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-weight: 700; font-size: 13px; color: var(--text-primary); margin: 16px 0 6px; }
+  .data-dl { font-size: 11px; font-weight: 600; color: var(--text-secondary); cursor: pointer; border: 1px solid var(--border); border-radius: 5px; padding: 3px 9px; background: none; white-space: nowrap; }
+  .data-dl:hover { background: var(--page-plane); color: var(--text-primary); }
+  .data-table-wrap { max-height: 400px; overflow: auto; border: 1px solid var(--gridline); border-radius: 6px; }
+  table.data-tbl { border-collapse: collapse; width: 100%; font-size: 12px; }
+  table.data-tbl th { position: sticky; top: 0; background: var(--page-plane); text-align: left; padding: 6px 9px; font-weight: 700; color: var(--text-secondary); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  table.data-tbl td { padding: 4px 9px; border-bottom: 1px solid var(--gridline); color: var(--text-secondary); }
+  table.data-tbl td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  table.data-tbl tr:hover td { background: var(--page-plane); }
   #about-page { position: fixed; inset: 0; z-index: 3000; background: var(--surface-1); overflow-y: auto; display: none; }
   #about-page.open { display: block; }
   #about-page .about-inner { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; }
@@ -303,7 +325,8 @@
     <div class="hd-titles">
       <h1>Choice Supply Distribution Map</h1>
       <span class="subtitle">School-choice program participation &amp; private-school supply across the U.S.</span>
-      <button id="about-btn" type="button" onclick="openAbout()">About &amp; methodology</button>
+      <button class="hd-btn" type="button" onclick="openAbout()">About &amp; methodology</button>
+      <button class="hd-btn" type="button" onclick="openData()">Open data</button>
     </div>
     <form id="addr-search" autocomplete="off">
       <input id="addr-input" type="text" placeholder="Search any U.S. address, city, or ZIP&hellip;" aria-label="Search an address" />
@@ -366,6 +389,14 @@
     </ul>
 
     <p style="margin-top:24px;font-size:12.5px;color:var(--text-muted);">Full technical source citations for every number are in the project's <b>data/profiles/sources.json</b> and the <b>scripts/pipeline/</b> documentation.</p>
+  </div>
+</div>
+<div id="data-page">
+  <button class="data-close" type="button" onclick="closeData()">&times; Close</button>
+  <div class="data-inner">
+    <h2>Open data &mdash; raw tables by state</h2>
+    <div class="about-sub">Every figure on the map in its source form: each program's reported counts by area, and the full private-school directory for each state. Expand a state; download any table as CSV.</div>
+    <div id="data-states"></div>
   </div>
 </div>
 <script type="module">
@@ -577,6 +608,98 @@ function programCountsSelect(abbr, i) {
 function card(num, lbl) { return `<div class="sp-card"><div class="num">${num}</div><div class="lbl">${lbl}</div></div>`; }
 function openAbout() { document.getElementById('about-page').classList.add('open'); }
 function closeAbout() { document.getElementById('about-page').classList.remove('open'); }
+
+// ---- Open-data page: raw tables per state, with CSV export ----
+function openData() { document.getElementById('data-page').classList.add('open'); buildDataPageOnce(); }
+function closeData() { document.getElementById('data-page').classList.remove('open'); }
+function _stateName(abbr) { return (STATE_PROFILES[abbr] && STATE_PROFILES[abbr].name) || abbr; }
+function _cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+let dataPageBuilt = false;
+function buildDataPageOnce() {
+  if (dataPageBuilt) return;
+  dataPageBuilt = true;
+  const abbrs = Array.from(new Set(Object.keys(SCHOOLS_ALL).concat(PROGRAM_LAYERS.map(function(l) { return l.abbr; }))));
+  abbrs.sort(function(a, b) { return _stateName(a).localeCompare(_stateName(b)); });
+  const host = document.getElementById('data-states');
+  host.innerHTML = abbrs.map(function(abbr) {
+    const n = (SCHOOLS_ALL[abbr] || []).length;
+    const prog = PROGRAM_LAYERS.some(function(l) { return l.abbr === abbr; });
+    const badge = `<span class="data-badge">${fmt(n)} schools${prog ? ' &middot; program data' : ''}</span>`;
+    return `<details class="data-state" data-abbr="${abbr}"><summary>${_stateName(abbr)} ${badge}</summary><div class="data-state-body"></div></details>`;
+  }).join('');
+  host.querySelectorAll('details.data-state').forEach(function(d) {
+    d.addEventListener('toggle', function() {
+      if (d.open && !d.dataset.filled) { d.dataset.filled = '1'; d.querySelector('.data-state-body').innerHTML = dataStateBody(d.dataset.abbr); }
+    });
+  });
+}
+
+function _schoolFlag(abbr) {
+  const s = SCHOOLS_ALL[abbr] || [];
+  if (s.some(function(x) { return x.efa; })) return 'efa';
+  if (s.some(function(x) { return x.boost; })) return 'boost';
+  if (s.some(function(x) { return x.scholarship; })) return 'scholarship';
+  return null;
+}
+
+function dataStateBody(abbr) {
+  let html = '';
+  PROGRAM_LAYERS.filter(function(l) { return l.abbr === abbr; }).forEach(function(l, li) {
+    const rows = l.geo.features.map(function(f) { return [f.properties[l.nameKey], +f.properties[l.key] || 0]; })
+      .filter(function(r) { return r[1] > 0; }).sort(function(a, b) { return b[1] - a[1]; });
+    const total = rows.reduce(function(s, r) { return s + r[1]; }, 0);
+    html += `<div class="data-subhead"><span>Program participation &mdash; ${l.label} (${fmt(total)} across ${fmt(rows.length)} ${l.unit}${rows.length === 1 ? '' : 's'})</span><button class="data-dl" onclick="downloadTable('${abbr}','prog',${li})">Download CSV</button></div>`;
+    html += `<div class="data-table-wrap"><table class="data-tbl"><thead><tr><th>${_cap(l.unit)}</th><th>Reported count</th></tr></thead><tbody>`
+      + rows.map(function(r) { return `<tr><td>${r[0]}</td><td class="num">${fmt(r[1])}</td></tr>`; }).join('') + `</tbody></table></div>`;
+  });
+  const schools = SCHOOLS_ALL[abbr] || [];
+  const flag = _schoolFlag(abbr);
+  const flagHead = flag === 'efa' ? '<th>EFA / total</th>' : flag === 'boost' ? '<th>BOOST (award)</th>' : flag === 'scholarship' ? '<th>MOScholars $</th>' : '';
+  html += `<div class="data-subhead"><span>Private schools (${fmt(schools.length)})</span><button class="data-dl" onclick="downloadTable('${abbr}','schools',0)">Download CSV</button></div>`;
+  html += `<div class="data-table-wrap"><table class="data-tbl"><thead><tr><th>Name</th><th>City</th><th>ZIP</th><th>Level</th><th>Religion</th><th>Coed</th><th>Enroll</th>${flagHead}<th>Geocode</th></tr></thead><tbody>`;
+  html += schools.map(function(s) {
+    let fc = '';
+    if (flag === 'efa') fc = `<td class="num">${s.efa ? s.efa.efa + ' / ' + s.efa.total : ''}</td>`;
+    else if (flag === 'boost') fc = `<td class="num">${s.boost ? fmt(s.boost.students) + ' ($' + fmt(s.boost.award) + ')' : ''}</td>`;
+    else if (flag === 'scholarship') fc = `<td class="num">${s.scholarship ? '$' + fmt(s.scholarship.amount) : ''}</td>`;
+    return `<tr><td>${s.name}</td><td>${s.city || ''}</td><td>${s.zip || ''}</td><td>${s.level}</td><td>${s.relig}</td><td>${s.coed}</td><td class="num">${s.enroll == null ? '' : fmt(s.enroll)}</td>${fc}<td>${s.geo_method || ''}</td></tr>`;
+  }).join('') + `</tbody></table></div>`;
+  return html;
+}
+
+function _csv(headers, rows) {
+  const esc = function(v) { v = (v == null ? '' : String(v)); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  return [headers.join(',')].concat(rows.map(function(r) { return r.map(esc).join(','); })).join('\n');
+}
+function _downloadCSV(filename, csv) {
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function() { URL.revokeObjectURL(url); }, 1500);
+}
+function downloadTable(abbr, kind, idx) {
+  if (kind === 'prog') {
+    const l = PROGRAM_LAYERS.filter(function(x) { return x.abbr === abbr; })[idx];
+    const rows = l.geo.features.map(function(f) { return [f.properties[l.nameKey], +f.properties[l.key] || 0]; })
+      .filter(function(r) { return r[1] > 0; }).sort(function(a, b) { return b[1] - a[1]; });
+    _downloadCSV(abbr + '_' + l.label.replace(/[^a-z0-9]+/gi, '_').replace(/^_|_$/g, '') + '.csv', _csv([l.unit, 'reported_count'], rows));
+  } else {
+    const schools = SCHOOLS_ALL[abbr] || [];
+    const base = ['id', 'name', 'address', 'city', 'zip', 'state', 'level', 'type', 'relig', 'coed', 'enroll', 'enroll_source', 'geo_method', 'lon', 'lat'];
+    const flag = _schoolFlag(abbr);
+    const extra = flag === 'efa' ? ['efa_students', 'efa_total'] : flag === 'boost' ? ['boost_students', 'boost_award'] : flag === 'scholarship' ? ['scholarship_amount'] : [];
+    const rows = schools.map(function(s) {
+      const r = base.map(function(c) { return s[c]; });
+      if (flag === 'efa') r.push(s.efa ? s.efa.efa : '', s.efa ? s.efa.total : '');
+      else if (flag === 'boost') r.push(s.boost ? s.boost.students : '', s.boost ? s.boost.award : '');
+      else if (flag === 'scholarship') r.push(s.scholarship ? s.scholarship.amount : '');
+      return r;
+    });
+    _downloadCSV('schools_' + abbr + '.csv', _csv(base.concat(extra), rows));
+  }
+}
 
 // Gold-standard supply-side view for programs with a by-school breakdown (MD BOOST):
 // which private schools actually enroll voucher students, and how concentrated.
@@ -1247,7 +1370,7 @@ addrForm.addEventListener('submit', function(e) {
 
 // Under type="module" the top-level scope isn't global, so expose the handlers
 // referenced by inline onclick="" attributes in the profile panel / About page.
-Object.assign(window, { calloutToggleSchools, calloutSetMode, openAbout, closeAbout, showStateProfile, programCountsSelect });
+Object.assign(window, { calloutToggleSchools, calloutSetMode, openAbout, closeAbout, showStateProfile, programCountsSelect, openData, closeData, downloadTable });
 </script>
 </body>
 </html>
