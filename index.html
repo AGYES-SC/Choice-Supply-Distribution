@@ -327,6 +327,40 @@
   .doc-page .toc { columns: 2; font-size: 13px; margin: 6px 0 4px; }
   .doc-page .toc a { color: var(--accent-dark); text-decoration: none; }
   .doc-page .toc a:hover { text-decoration: underline; }
+  .gap-verdict { display: inline-block; font-size: 12px; font-weight: 700; padding: 3px 11px; border-radius: 20px; margin: 4px 0 9px; }
+  .gap-verdict.gap-good { background: #e6f4ea; color: #137333; }
+  .gap-verdict.gap-mid { background: #fef7e0; color: #8a6100; }
+  .gap-verdict.gap-bad { background: #fce8e6; color: #c5221f; }
+  .gap-list { font-size: 12.5px; color: var(--text-secondary); margin-top: 8px; }
+  .gap-list ul { margin: 4px 0 0; padding-left: 18px; }
+  .gap-list li { margin-bottom: 3px; }
+  #tool-launch { position: absolute; left: 50%; transform: translateX(-50%); bottom: 20px; z-index: 620; display: flex; gap: 10px; }
+  .tool-btn { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 9px 15px; cursor: pointer; box-shadow: 0 2px 14px rgba(0,0,0,0.18); display: flex; flex-direction: column; align-items: flex-start; line-height: 1.3; text-align: left; }
+  .tool-btn:hover { border-color: var(--accent); }
+  .tool-btn .tb-title { font-weight: 700; font-size: 12.5px; color: var(--text-primary); }
+  .tool-btn .tb-sub { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+  @media (max-width: 620px) { #tool-launch { flex-direction: column; bottom: 12px; } }
+  #wizard { position: fixed; inset: 0; z-index: 3200; background: rgba(20,18,16,0.45); display: none; align-items: center; justify-content: center; padding: 20px; }
+  #wizard.open { display: flex; }
+  .wiz-card { background: var(--surface-1); border-radius: 14px; width: min(560px, 100%); max-height: 88vh; overflow-y: auto; box-shadow: 0 8px 40px rgba(0,0,0,0.3); }
+  .wiz-head { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid var(--gridline); position: sticky; top: 0; background: var(--surface-1); z-index: 1; }
+  .wiz-head h3 { margin: 0; font-size: 16px; color: var(--text-primary); }
+  .wiz-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-muted); line-height: 1; }
+  .wiz-body { padding: 18px 20px 24px; }
+  .wiz-progress { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 7px; }
+  .wiz-q { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 15px; line-height: 1.4; }
+  .wiz-opts { display: flex; flex-direction: column; gap: 8px; }
+  .wiz-opt { text-align: left; background: var(--page-plane); border: 1px solid var(--border); border-radius: 8px; padding: 11px 14px; font-size: 13.5px; color: var(--text-primary); cursor: pointer; }
+  .wiz-opt:hover { border-color: var(--accent); background: var(--surface-1); }
+  .wiz-select, .wiz-input { width: 100%; padding: 10px 12px; font-size: 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-1); color: var(--text-primary); box-sizing: border-box; }
+  .wiz-go { margin-top: 11px; background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 10px 16px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+  .wiz-back { background: none; border: none; color: var(--text-muted); font-size: 12px; cursor: pointer; margin-top: 14px; padding: 0; }
+  .wiz-res-verdict { font-size: 14.5px; font-weight: 500; color: var(--text-primary); border-left: 3px solid var(--accent); padding-left: 12px; margin: 10px 0 14px; line-height: 1.5; }
+  .wiz-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--gridline); font-size: 13px; }
+  .wiz-row .r-main { color: var(--text-primary); font-weight: 500; }
+  .wiz-row .r-sub { color: var(--text-muted); font-size: 11.5px; }
+  .wiz-row .r-val { color: var(--text-secondary); white-space: nowrap; text-align: right; }
+  .wiz-note { font-size: 12px; color: var(--text-muted); margin-top: 13px; line-height: 1.55; }
 </style>
 </head>
 <body>
@@ -353,6 +387,10 @@
       <button type="button" data-region="hi">Hawaii</button>
     </div>
     <button id="sp-reopen" aria-label="Show summary">&#9776;&nbsp; Summary</button>
+    <div id="tool-launch">
+      <button class="tool-btn" type="button" onclick="openWizard('entrepreneur')"><span class="tb-title">&#127919; I want to start a school</span><span class="tb-sub">Find the biggest access gaps &amp; opportunities</span></button>
+      <button class="tool-btn" type="button" onclick="openWizard('parent')"><span class="tb-title">&#127891; I'm a parent</span><span class="tb-sub">Find a private school near me</span></button>
+    </div>
     <div id="state-profile">
       <div class="sp-header">
         <div class="sp-title" id="sp-title">State</div>
@@ -533,6 +571,12 @@ participants per school   = &Sigma;P / (school count)</div>
   </div>
 </div>
 
+<div id="wizard">
+  <div class="wiz-card">
+    <div class="wiz-head"><h3 id="wiz-title">Guided tool</h3><button class="wiz-close" type="button" onclick="closeWizard()">&times;</button></div>
+    <div class="wiz-body" id="wiz-body"></div>
+  </div>
+</div>
 <div id="data-page">
   <button class="data-close" type="button" onclick="closeData()">&times; Close</button>
   <div class="data-inner">
@@ -962,6 +1006,120 @@ function characteristicsBody(s) {
   return html;
 }
 
+// ---- Guided tools: entrepreneur gap-finder + parent school-finder ----
+const WIZ = { mode: null, step: 0, ans: {}, loc: null };
+const WIZ_CFG = {
+  entrepreneur: {
+    title: 'Find an access gap to fill',
+    steps: [
+      { key: 'scope', q: 'Where do you want to look for opportunity?', type: 'state', all: 'Compare all program states' },
+      { key: 'level', q: 'Which grade level are you thinking about serving?', opts: [['any', 'Any / not sure'], ['Elementary', 'Elementary'], ['Combined', 'K–12 (combined)'], ['Secondary', 'High school']] },
+      { key: 'model', q: 'What kind of school model?', opts: [['any', 'Any'], ['faith', 'Faith-based'], ['secular', 'Secular / nonsectarian']] },
+    ],
+  },
+  parent: {
+    title: 'Find a private school for your child',
+    steps: [
+      { key: 'loc', q: 'Where do you live? Enter an address, city, or ZIP.', type: 'address' },
+      { key: 'level', q: 'What grade level is your child?', opts: [['any', 'Any / not sure'], ['Elementary', 'Elementary'], ['Combined', 'K–12 (combined)'], ['Secondary', 'High school']] },
+      { key: 'faith', q: 'Any preference on school type?', opts: [['any', 'No preference'], ['Catholic', 'Catholic'], ['Other religious', 'Other religious'], ['Nonsectarian', 'Nonsectarian / secular']] },
+    ],
+  },
+};
+
+function openWizard(mode) { WIZ.mode = mode; WIZ.step = 0; WIZ.ans = {}; WIZ.loc = null; document.getElementById('wizard').classList.add('open'); renderWizard(); }
+function closeWizard() { document.getElementById('wizard').classList.remove('open'); }
+function wizBack() { if (WIZ.step > 0) { WIZ.step--; renderWizard(); } }
+function wizAnswer(key, val) { WIZ.ans[key] = val; WIZ.step++; renderWizard(); }
+
+function renderWizard() {
+  const cfg = WIZ_CFG[WIZ.mode];
+  document.getElementById('wiz-title').textContent = cfg.title;
+  const body = document.getElementById('wiz-body');
+  if (WIZ.step >= cfg.steps.length) { body.innerHTML = (WIZ.mode === 'entrepreneur' ? entrepreneurResults() : parentResults()); return; }
+  const st = cfg.steps[WIZ.step];
+  let inner = `<div class="wiz-progress">Step ${WIZ.step + 1} of ${cfg.steps.length}</div><div class="wiz-q">${st.q}</div>`;
+  if (st.type === 'state') {
+    const progs = Array.from(new Set(PROGRAM_LAYERS.map(function(l) { return l.abbr; }))).sort(function(a, b) { return _stateName(a).localeCompare(_stateName(b)); });
+    inner += `<select class="wiz-select" id="wiz-state"><option value="all">${st.all}</option>` + progs.map(function(a) { return `<option value="${a}">${_stateName(a)}</option>`; }).join('') + `</select><button class="wiz-go" onclick="wizAnswer('${st.key}', document.getElementById('wiz-state').value)">Continue</button>`;
+  } else if (st.type === 'address') {
+    inner += `<input class="wiz-input" id="wiz-addr" type="text" placeholder="e.g. 123 Main St, Springfield, MO" /><div id="wiz-addr-status" class="wiz-note"></div><button class="wiz-go" onclick="wizGeocode()">Find my area</button>`;
+  } else {
+    inner += `<div class="wiz-opts">` + st.opts.map(function(o) { return `<button class="wiz-opt" onclick="wizAnswer('${st.key}','${o[0]}')">${o[1]}</button>`; }).join('') + `</div>`;
+  }
+  if (WIZ.step > 0) inner += `<button class="wiz-back" onclick="wizBack()">&larr; Back</button>`;
+  body.innerHTML = inner;
+  const ai = document.getElementById('wiz-addr'); if (ai) ai.focus();
+}
+
+function wizGeocode() {
+  const q = document.getElementById('wiz-addr').value.trim();
+  if (!q) return;
+  const stEl = document.getElementById('wiz-addr-status'); stEl.textContent = 'Searching…';
+  const url = 'https://nominatim.openstreetmap.org/search?' + new URLSearchParams({ q: q, format: 'json', limit: '1', countrycodes: 'us', addressdetails: '1' });
+  fetch(url, { headers: { 'Accept': 'application/json' } }).then(function(r) { return r.json(); }).then(function(d) {
+    if (!d || !d.length) { stEl.textContent = 'No match — add a city and state, or a ZIP.'; return; }
+    const h = d[0]; let abbr = null;
+    const iso = h.address && h.address['ISO3166-2-lvl4']; if (iso && iso.indexOf('US-') === 0) abbr = iso.slice(3);
+    if (!abbr && h.address && h.address.state) abbr = STATE_ABBR[h.address.state];
+    WIZ.loc = { lat: parseFloat(h.lat), lon: parseFloat(h.lon), abbr: abbr, name: (h.display_name || q).split(',').slice(0, 3).join(',') };
+    WIZ.ans.loc = WIZ.loc.name; WIZ.step++; renderWizard();
+  }).catch(function() { stEl.textContent = 'Search failed — check your connection.'; });
+}
+
+function _schoolMatches(s, level, model) {
+  if (level && level !== 'any' && s.level !== level && s.level !== 'Combined') return false;
+  if (model === 'faith' && !(s.relig === 'Catholic' || s.relig === 'Other religious')) return false;
+  if (model === 'secular' && s.relig !== 'Nonsectarian') return false;
+  return true;
+}
+
+function entrepreneurResults() {
+  const a = WIZ.ans, level = a.level, model = a.model;
+  const modelLbl = model === 'faith' ? 'faith-based ' : model === 'secular' ? 'secular ' : '';
+  const levelLbl = level && level !== 'any' ? level.toLowerCase() + ' ' : '';
+  let html = `<button class="wiz-back" onclick="wizBack()">&larr; Change answers</button>`;
+  if (a.scope === 'all') {
+    const rows = Object.keys(STATE_PROFILES).filter(function(x) { const c = STATE_PROFILES[x].access; return c && c.hasProgram && c.participantsPerSeat != null; })
+      .map(function(x) { const c = STATE_PROFILES[x].access; return { x: x, name: STATE_PROFILES[x].name, pps: c.participantsPerSeat, desert: c.pctChildrenInDesert || 0, seatsK: c.seatsPer1000Kids, score: (c.participantsPerSeat * 8) + (c.pctChildrenInDesert || 0) }; })
+      .sort(function(p, q) { return q.score - p.score; }).slice(0, 6);
+    html += `<div class="wiz-res-verdict">States where demand for choice most outstrips ${modelLbl}private-school supply &mdash; the biggest openings for a new ${levelLbl}school.</div>`;
+    html += rows.map(function(r) { return `<div class="wiz-row"><div><div class="r-main">${r.name}</div><div class="r-sub">${r.pps} participants per seat &middot; ${r.desert}% of kids in an access desert &middot; ${r.seatsK} seats / 1,000 kids</div></div><div class="r-val"><button class="wiz-opt" style="padding:5px 10px;" onclick="closeWizard();showStateProfile('${r.x}')">Open</button></div></div>`; }).join('');
+    html += `<div class="wiz-note">&ldquo;Participants per seat&rdquo; above 1 means more program users than local private-school seats &mdash; funding with nowhere brick-and-mortar to spend it. Open a state, then use its <b>Reported program counts by area</b> drawer to see which ZIPs/counties/districts have the most demand.</div>`;
+  } else {
+    const abbr = a.scope, lk = CHOROPLETH_LOOKUP[abbr], prof = STATE_PROFILES[abbr];
+    const schools = (SCHOOLS_ALL[abbr] || []).filter(function(s) { return _schoolMatches(s, level, model); });
+    const cnt = new Map();
+    schools.forEach(function(s) { const f = findContainingFeature(lk.geo, s.lon, s.lat); if (f) cnt.set(f, (cnt.get(f) || 0) + 1); });
+    const areas = lk.geo.features.map(function(f) { return { name: f.properties.name || ('ZIP ' + f.properties.zip), part: +f.properties[lk.valueKey] || 0, sup: cnt.get(f) || 0 }; })
+      .filter(function(z) { return z.part > 0; }).map(function(z) { z.gap = z.part / (z.sup + 1); return z; }).sort(function(p, q) { return q.gap - p.gap; }).slice(0, 10);
+    const c = prof.access || {};
+    html += `<div class="wiz-res-verdict">In ${prof.name}, these ${lk.geoUnit}s have the most program demand with the fewest ${modelLbl}${levelLbl}private schools nearby &mdash; the strongest openings for a new school.</div>`;
+    html += areas.map(function(z) { return `<div class="wiz-row"><div class="r-main">${z.name}</div><div class="r-val">${fmt(z.part)} students &middot; ${z.sup} matching school${z.sup === 1 ? '' : 's'}</div></div>`; }).join('') || '<div class="wiz-note">No areas with participation found for this filter.</div>';
+    html += `<div class="wiz-note">Statewide: ${c.participantsPerSeat != null ? c.participantsPerSeat + ' participants per private-school seat, ' : ''}${c.pctChildrenInDesert != null ? c.pctChildrenInDesert + '% of children in an access desert. ' : ''}&ldquo;Matching schools&rdquo; counts existing ${modelLbl}${levelLbl}private schools located in that ${lk.geoUnit}.</div>`;
+  }
+  return html;
+}
+
+function parentResults() {
+  const a = WIZ.ans, level = a.level, faith = a.faith, loc = WIZ.loc;
+  let html = `<button class="wiz-back" onclick="wizBack()">&larr; Change answers</button>`;
+  if (!loc) return html + '<div class="wiz-note">Please go back and enter a location.</div>';
+  const near = nearbySchools(loc.lat, loc.lon, 50).filter(function(x) {
+    if (level !== 'any' && x.s.level !== level && x.s.level !== 'Combined') return false;
+    if (faith !== 'any' && x.s.relig !== faith) return false;
+    return true;
+  });
+  const prof = loc.abbr && STATE_PROFILES[loc.abbr], prog = prof && primaryProgram(prof);
+  const faithLbl = faith !== 'any' ? faith.toLowerCase() + ' ' : '', levelLbl = level !== 'any' ? level.toLowerCase() + ' ' : '';
+  if (prog) html += `<div class="wiz-res-verdict">${prof.name} offers <b>${prog.label}</b> &mdash; ${fmt(prog.total)} ${prog.unit} statewide. Your family may be eligible for funding toward private-school tuition. <button class="wiz-opt" style="display:inline-block;padding:3px 9px;margin-top:6px;" onclick="closeWizard();showStateProfile('${loc.abbr}')">See the program &rarr;</button></div>`;
+  else html += `<div class="wiz-res-verdict">${prof ? prof.name : 'Your state'} has no school-choice program loaded here yet &mdash; the schools below would be private-pay unless a program applies.</div>`;
+  html += `<div class="wiz-progress" style="margin-top:8px;">${fmt(near.length)} matching ${faithLbl}${levelLbl}private school${near.length === 1 ? '' : 's'} within 50 miles of ${loc.name}</div>`;
+  html += near.slice(0, 15).map(function(x) { return `<div class="wiz-row"><div><div class="r-main">${x.s.name}</div><div class="r-sub">${x.s.city}, ${x.abbr} &middot; ${x.s.level}${x.s.relig !== 'Not reported' ? ' &middot; ' + x.s.relig : ''}${x.s.enroll ? ' &middot; ' + fmt(x.s.enroll) + ' students' : ''}</div></div><div class="r-val">${x.d.toFixed(1)} mi</div></div>`; }).join('') || '<div class="wiz-note">No matching private schools within 50 miles &mdash; this area is an access desert for your criteria. Try widening your preferences, or search this address on the map for the nearest options.</div>';
+  if (near.length > 15) html += `<div class="wiz-note">Showing the 15 nearest of ${fmt(near.length)}. Search this address on the map for the full list and gap analysis.</div>`;
+  return html;
+}
+
 function showNationalProfile() {
   currentAbbr = null;
   currentView = 'national';
@@ -1384,6 +1542,49 @@ function primaryProgram(profile) {
   return profile.program || null;
 }
 
+// Access gap analysis for a searched point: is this area well-served by private
+// schools, and if not, what's missing (level / faith / distance)?
+function searchGapAnalysis(near) {
+  const w25 = near.filter(function(x) { return x.d <= 25; });
+  const w10 = near.filter(function(x) { return x.d <= 10; });
+  const lvl = { Elementary: 0, Combined: 0, Secondary: 0 };
+  const rel = { Catholic: 0, 'Other religious': 0, Nonsectarian: 0 };
+  let seats = 0;
+  w25.forEach(function(x) {
+    if (lvl[x.s.level] != null) lvl[x.s.level]++;
+    if (rel[x.s.relig] != null) rel[x.s.relig]++;
+    if (x.s.enroll) seats += x.s.enroll;
+  });
+  const nearest = near[0];
+  const gaps = [];
+  if (!near.length) {
+    gaps.push('No private school at all within 50 miles &mdash; a severe access desert.');
+  } else {
+    if (!w10.length) gaps.push('No private school within 10 miles (nearest is ' + Math.round(nearest.d) + ' mi away).');
+    if (lvl.Secondary + lvl.Combined === 0) gaps.push('No high-school option (grades 9&ndash;12) within 25 miles.');
+    if (lvl.Elementary + lvl.Combined === 0) gaps.push('No elementary option within 25 miles.');
+    if (rel.Nonsectarian === 0) gaps.push('No nonsectarian / secular private school within 25 miles.');
+    if (rel.Catholic + rel['Other religious'] === 0) gaps.push('No faith-based private school within 25 miles.');
+  }
+  let verdict, cls;
+  if (!w10.length) { verdict = 'Access gap'; cls = 'gap-bad'; }
+  else if (w10.length >= 5 && !gaps.length) { verdict = 'Well served'; cls = 'gap-good'; }
+  else { verdict = 'Partial coverage'; cls = 'gap-mid'; }
+  const lvlLine = 'Elementary ' + lvl.Elementary + ' &middot; K&ndash;12 ' + lvl.Combined + ' &middot; High ' + lvl.Secondary;
+  const relLine = 'Catholic ' + rel.Catholic + ' &middot; Other religious ' + rel['Other religious'] + ' &middot; Nonsectarian ' + rel.Nonsectarian;
+  return `
+    <div class="sp-section">
+      <div class="sp-label">Access gap analysis</div>
+      <div class="gap-verdict ${cls}">${verdict}</div>
+      <div class="sp-kv-row"><span class="k">Nearest private school</span><span class="v">${near.length ? nearest.d.toFixed(1) + ' mi' : 'none &lt; 50 mi'}</span></div>
+      <div class="sp-kv-row"><span class="k">Seats within 25 mi</span><span class="v">${fmt(seats)}</span></div>
+      <div class="sp-kv-row"><span class="k">By level (&le; 25 mi)</span><span class="v">${lvlLine}</span></div>
+      <div class="sp-kv-row"><span class="k">By type (&le; 25 mi)</span><span class="v">${relLine}</span></div>
+      ${gaps.length ? '<div class="gap-list"><b>Gaps near here:</b><ul>' + gaps.map(function(g) { return '<li>' + g + '</li>'; }).join('') + '</ul></div>' : '<div class="sp-note" style="padding:6px 0;">Good coverage: schools nearby across levels and types.</div>'}
+      <button class="sp-howlink" onclick="openWizard('entrepreneur')">See where the biggest gaps are &rarr;</button>
+    </div>`;
+}
+
 // The post-search "window": choice-student count for the area + private schools
 // within 50 miles, rendered into the profile panel.
 const NEARBY_RADIUS_MI = 50;
@@ -1448,6 +1649,7 @@ function showSearchResult(lat, lon, displayName, abbr) {
       <div class="sp-schoollist">${listRows || '<div class="sp-note" style="padding:8px 9px;">No private schools in our data within 50 miles.</div>'}</div>
       ${moreNote}
     </div>`;
+  html += searchGapAnalysis(near);
   if (prof) {
     html += `<div class="sp-section"><button class="sp-linkbtn" onclick="showStateProfile('${abbr}')">View full ${prof.name} profile &rarr;</button></div>`;
   }
@@ -1514,7 +1716,7 @@ addrForm.addEventListener('submit', function(e) {
 
 // Under type="module" the top-level scope isn't global, so expose the handlers
 // referenced by inline onclick="" attributes in the profile panel / About page.
-Object.assign(window, { calloutToggleSchools, calloutSetMode, openAbout, closeAbout, openMethod, closeMethod, showStateProfile, programCountsSelect, openData, closeData, downloadTable });
+Object.assign(window, { calloutToggleSchools, calloutSetMode, openAbout, closeAbout, openMethod, closeMethod, showStateProfile, programCountsSelect, openData, closeData, downloadTable, openWizard, closeWizard, wizBack, wizAnswer, wizGeocode });
 </script>
 </body>
 </html>
