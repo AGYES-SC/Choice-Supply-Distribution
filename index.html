@@ -149,7 +149,7 @@
     top: 56px;
     right: 12px;
     bottom: 12px;
-    width: 320px;
+    width: 396px;
     max-width: calc(100vw - 24px);
     background: var(--surface-1);
     border: 1px solid var(--border);
@@ -813,6 +813,9 @@ function programCountsTable(abbr, idx) {
 // Arizona's two fiscal years). Falls back to the state profile if the layer
 // isn't a program layer (so a click can never dead-end).
 function drillToArea(abbr, geo, feature) {
+  // National view is state-level by design: the first click selects a state and
+  // zooms to it; only from inside a state do individual areas become clickable.
+  if (currentView === 'national') { focusState(abbr); return; }
   const layers = PROGRAM_LAYERS.filter(function(l) { return l.abbr === abbr; });
   let li = -1;
   for (let i = 0; i < layers.length; i++) { if (layers[i].geo === geo) { li = i; break; } }
@@ -850,6 +853,7 @@ function showAreaDetail(abbr, layerIdx, fi, keepView) {
   currentView = 'area';
   currentAbbr = abbr;
   currentArea = { abbr: abbr, layerIdx: layerIdx, fi: fi };
+  syncStateTiles();
   const p = f.properties, name = p[l.nameKey], part = +p[l.key] || 0;
   const pop = p.pop, acsPriv = p.acsPriv;
   const prof = STATE_PROFILES[abbr], prog = primaryProgram(prof);
@@ -1177,6 +1181,7 @@ function showWizardResults() {
   const html = (WIZ.mode === 'entrepreneur' ? entrepreneurResults() : parentResults());
   currentView = 'wizard';
   currentArea = null;
+  syncStateTiles();
   spTitle.textContent = cfg.title;
   spBody.innerHTML = html;
   spBody.scrollTop = 0;
@@ -1437,6 +1442,7 @@ function showNationalProfile() {
   currentView = 'national';
   currentArea = null; preDrillView = null;
   clearWizardMapLayers();
+  syncStateTiles();
   document.documentElement.style.setProperty('--accent', '#eb6834');
   spTitle.textContent = NATIONAL_PROFILE.name;
 
@@ -1456,6 +1462,7 @@ function showStateProfile(abbr) {
   currentView = 'state';
   currentArea = null; preDrillView = null;
   clearWizardMapLayers();
+  syncStateTiles();
   document.documentElement.style.setProperty('--accent', STATE_ACCENT[abbr] || '#898781');
   spTitle.textContent = profile.name;
 
@@ -1500,6 +1507,10 @@ map.getPane('schoolsPane').style.zIndex = 625;
 // matched-school dots above everything (640) so they read as the focus.
 map.createPane('wizPane');
 map.getPane('wizPane').style.zIndex = 610;
+// national-view state hit targets: above the choropleths (400) and labels (500)
+// so they mask area hover/click, but below the school dots (625) so those stay live
+map.createPane('stateTilesPane');
+map.getPane('stateTilesPane').style.zIndex = 615;
 map.createPane('wizDotsPane');
 map.getPane('wizDotsPane').style.zIndex = 640;
 
@@ -1525,7 +1536,77 @@ const stateBoundaryLayer = L.geoJSON(stateBoundariesGeo, {
     layer.on('click', function(e) { L.DomEvent.stop(e); showStateProfile(abbr); });
   }
 });
-stateBoundaryLayer.addTo(map);
+// Boundary LINES are off by default now - the national view is meant to read as
+// pure choropleth. Still available as a toggle in the layers control.
+
+// ---- State tiles: the national view's interaction layer ----
+// Zoom hierarchy: national picks a STATE, state picks an AREA. These invisible
+// per-state polygons sit above the choropleths so that at national zoom the
+// hover/click target is the whole state, not whatever ZIP or county happens to
+// be under the cursor. They're removed the moment you enter a state, which
+// uncovers the choropleths and makes areas clickable.
+//
+// Alaska's raw outline crosses the antimeridian, which would otherwise produce a
+// world-spanning invisible hit area, so its Aleutian rings (positive longitudes)
+// are dropped rather than excluding Alaska from the model entirely.
+function _westernRingsOnly(geom) {
+  if (geom.type !== 'MultiPolygon') return geom;
+  const keep = geom.coordinates.filter(function(poly) {
+    return !poly[0].some(function(pt) { return pt[0] > 0; });
+  });
+  return keep.length ? { type: 'MultiPolygon', coordinates: keep } : geom;
+}
+
+const STATE_BOUNDS = {};
+const stateTileLayer = L.geoJSON({
+  type: 'FeatureCollection',
+  features: stateBoundariesGeo.features.map(function(f) {
+    return { type: 'Feature', properties: f.properties,
+             geometry: f.properties.statefp === '02' ? _westernRingsOnly(f.geometry) : f.geometry };
+  })
+}, {
+  pane: 'stateTilesPane',
+  style: { fillColor: '#ffffff', fillOpacity: 0.01, color: '#6b6a63', weight: 0, opacity: 0 },
+  onEachFeature: function(feature, layer) {
+    const abbr = FIPS_TO_ABBR[feature.properties.statefp];
+    const prof = STATE_PROFILES[abbr];
+    if (!prof) return;
+    STATE_BOUNDS[abbr] = layer.getBounds();
+    const prog = primaryProgram(prof);
+    const sub = prog ? fmt(prog.total) + ' ' + prog.unit
+              : (prof.schools ? fmt(prof.schools.count) + ' private schools' : 'no data loaded yet');
+    layer.bindTooltip(`<div class="poly-tooltip"><div class="zt-head">${prof.name}</div>` +
+      `<div class="zt-total">${sub}</div>` +
+      `<div class="zt-foot">Click to open this state &rsaquo;</div></div>`,
+      { sticky: true, className: 'poly-tt', direction: 'top' });
+    layer.on('mouseover', function() {
+      layer.setStyle({ fillColor: STATE_ACCENT[abbr] || '#6b6a63', fillOpacity: 0.16, weight: 2, opacity: 0.9 });
+      layer.bringToFront();
+    });
+    layer.on('mouseout', function() {
+      layer.setStyle({ fillColor: '#ffffff', fillOpacity: 0.01, weight: 0, opacity: 0 });
+    });
+    layer.on('click', function(e) { L.DomEvent.stop(e); focusState(abbr); });
+  }
+});
+
+// Zoom to a state and open it. This is the only way into a state from national.
+function focusState(abbr) {
+  const b = STATE_BOUNDS[abbr];
+  // cap the zoom so big states frame naturally and tiny ones (RI, DE) don't
+  // rocket in past all context
+  if (b) gentleFlyToBounds(b, { maxZoom: 9 });
+  showStateProfile(abbr);
+}
+
+// Tiles are present ONLY in the national view; every other view needs the
+// choropleths underneath to be reachable.
+function syncStateTiles() {
+  const wantOn = (currentView === 'national');
+  const isOn = map.hasLayer(stateTileLayer);
+  if (wantOn && !isOn) stateTileLayer.addTo(map);
+  else if (!wantOn && isOn) map.removeLayer(stateTileLayer);
+}
 
 // ---- AZ ESA zip choropleth (one instance per fiscal year/period) ----
 function makeAzLayer(geo, edges, ramp, fiscalYearLabel, quarterKeys) {
